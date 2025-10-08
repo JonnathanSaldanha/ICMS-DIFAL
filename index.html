@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora DIFAL - Parser XML Real</title>
+    <title>Calculadora DIFAL - Alíquotas Atualizadas 2024</title>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -39,6 +39,42 @@
         header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            background: white;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .controls {
@@ -77,6 +113,16 @@
 
         .btn-danger {
             background: #e74c3c;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
             color: white;
         }
 
@@ -199,18 +245,6 @@
             border-left: 4px solid #ffc107;
         }
 
-        .debug-info {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 11px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-
         .calculadora-section {
             background: white;
             padding: 20px;
@@ -244,6 +278,93 @@
             border-color: #3498db;
         }
 
+        .filtros {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filtros input, .filtros select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .progresso-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .progresso-bar {
+            width: 200px;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .progresso-fill {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .config-section {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .admin-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e74c3c;
+            margin-top: 20px;
+        }
+
+        .tabela-admin {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .tabela-admin th,
+        .tabela-admin td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tabela-admin th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+
+        .tabela-admin input {
+            width: 80px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: center;
+        }
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -267,215 +388,292 @@
             .tabela-resultados {
                 font-size: 10px;
             }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🧮 Calculadora DIFAL - Parser XML Real</h1>
-            <p>Processamento preciso de XMLs com cálculos corretos de DIFAL</p>
+            <h1>🧮 Calculadora DIFAL - Alíquotas Atualizadas 2024</h1>
+            <p>Processamento preciso de XMLs com cálculos corretos de DIFAL - Base de dados atualizada</p>
         </header>
 
-        <div class="controls">
-            <button class="btn btn-primary" onclick="processarTodosXMLs()">Processar Todos XMLs</button>
-            <button class="btn btn-success" onclick="exportarExcel()">Exportar para Excel</button>
-            <button class="btn btn-warning" onclick="limparTudo()">Limpar Tudo</button>
-            <button class="btn btn-danger" onclick="mostrarDebug()">Mostrar Debug</button>
+        <div class="tabs">
+            <button class="tab active" onclick="abrirTab('tabCalculadora')">Calculadora</button>
+            <button class="tab" onclick="abrirTab('tabAdmin')">Administrar Alíquotas</button>
         </div>
 
-        <div class="main-content">
-            <div class="section">
-                <h2>Importar NFes (XML)</h2>
-                <div class="upload-area" id="uploadArea">
-                    <input type="file" id="xmlUpload" accept=".xml" multiple>
-                    <div class="upload-placeholder">
-                        <span>📁 Arraste XMLs aqui ou clique para selecionar</span>
-                        <br>
-                        <small>Suporte para múltiplos arquivos - Processamento real de XML</small>
-                    </div>
-                </div>
+        <div id="tabCalculadora" class="tab-content active">
+            <div class="controls">
+                <button class="btn btn-primary" onclick="processarTodosXMLs()">Processar Todos XMLs</button>
+                <button class="btn btn-success" onclick="exportarExcel()">Exportar para Excel</button>
+                <button class="btn btn-info" onclick="fazerBackup()">Fazer Backup</button>
+                <button class="btn btn-warning" onclick="limparTudo()">Limpar Tudo</button>
+            </div>
 
-                <div class="resumo">
-                    <h4>Resumo dos Cálculos</h4>
-                    <div id="resumoCalculos">Nenhum XML processado</div>
-                </div>
-
-                <div id="debugInfo" style="display: none;">
-                    <h4>Informações de Debug</h4>
-                    <div id="debugContent" class="debug-info"></div>
-                </div>
-
-                <div class="calculadora-section">
-                    <h3>Calculadora Manual</h3>
-                    <div class="form-group">
-                        <label for="ufOrigem">UF de Origem:</label>
-                        <select id="ufOrigem">
-                            <option value="">Selecione...</option>
-                            <option value="AC">AC</option>
-                            <option value="AL">AL</option>
-                            <option value="AP">AP</option>
-                            <option value="AM">AM</option>
-                            <option value="BA">BA</option>
-                            <option value="CE">CE</option>
-                            <option value="DF">DF</option>
-                            <option value="ES">ES</option>
-                            <option value="GO">GO</option>
-                            <option value="MA">MA</option>
-                            <option value="MT">MT</option>
-                            <option value="MS">MS</option>
-                            <option value="MG">MG</option>
-                            <option value="PA">PA</option>
-                            <option value="PB">PB</option>
-                            <option value="PR">PR</option>
-                            <option value="PE">PE</option>
-                            <option value="PI">PI</option>
-                            <option value="RJ">RJ</option>
-                            <option value="RN">RN</option>
-                            <option value="RS">RS</option>
-                            <option value="RO">RO</option>
-                            <option value="RR">RR</option>
-                            <option value="SC">SC</option>
-                            <option value="SP">SP</option>
-                            <option value="SE">SE</option>
-                            <option value="TO">TO</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="ufDestino">UF de Destino:</label>
-                        <select id="ufDestino">
-                            <option value="">Selecione...</option>
-                            <option value="AC">AC</option>
-                            <option value="AL">AL</option>
-                            <option value="AP">AP</option>
-                            <option value="AM">AM</option>
-                            <option value="BA">BA</option>
-                            <option value="CE">CE</option>
-                            <option value="DF">DF</option>
-                            <option value="ES">ES</option>
-                            <option value="GO">GO</option>
-                            <option value="MA">MA</option>
-                            <option value="MT">MT</option>
-                            <option value="MS">MS</option>
-                            <option value="MG">MG</option>
-                            <option value="PA">PA</option>
-                            <option value="PB">PB</option>
-                            <option value="PR">PR</option>
-                            <option value="PE">PE</option>
-                            <option value="PI">PI</option>
-                            <option value="RJ">RJ</option>
-                            <option value="RN">RN</option>
-                            <option value="RS">RS</option>
-                            <option value="RO">RO</option>
-                            <option value="RR">RR</option>
-                            <option value="SC">SC</option>
-                            <option value="SP">SP</option>
-                            <option value="SE">SE</option>
-                            <option value="TO">TO</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="valorBase">Valor Base (R$):</label>
-                        <input type="number" id="valorBase" step="0.01" placeholder="0,00">
-                    </div>
-
-                    <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">Calcular DIFAL Manual</button>
-
-                    <div id="resultadoManual" style="margin-top: 15px;"></div>
+            <div class="progresso-container" id="progressoContainer">
+                <div id="progressoTexto">Processando...</div>
+                <div class="progresso-bar">
+                    <div class="progresso-fill" id="progressoFill"></div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>Resultados dos Cálculos</h2>
-                <div class="tabela-container">
-                    <table class="tabela-resultados">
-                        <thead>
-                            <tr>
-                                <th>NF-e</th>
-                                <th>Origem</th>
-                                <th>Destino</th>
-                                <th>Valor Total</th>
-                                <th>Aliq. Inter</th>
-                                <th>Aliq. Interna</th>
-                                <th>DIFAL</th>
-                                <th>FCP</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaResultados">
-                            <tr>
-                                <td colspan="9" style="text-align: center; padding: 20px;">
-                                    Nenhum resultado disponível
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="main-content">
+                <div class="section">
+                    <h2>Importar NFes (XML)</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="xmlUpload" accept=".xml" multiple>
+                        <div class="upload-placeholder">
+                            <span>📁 Arraste XMLs aqui ou clique para selecionar</span>
+                            <br>
+                            <small>Suporte para múltiplos arquivos - Processamento real de XML</small>
+                        </div>
+                    </div>
+
+                    <div class="resumo">
+                        <h4>Resumo dos Cálculos</h4>
+                        <div id="resumoCalculos">Nenhum XML processado</div>
+                    </div>
+
+                    <div class="config-section">
+                        <h4>⚙️ Configurações</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                            <label>
+                                <input type="checkbox" id="autoProcessar" checked> Auto-processar
+                            </label>
+                            <label>
+                                <input type="checkbox" id="manterHistorico" checked> Manter histórico
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="calculadora-section">
+                        <h3>Calculadora Manual</h3>
+                        <div class="form-group">
+                            <label for="ufOrigem">UF de Origem:</label>
+                            <select id="ufOrigem">
+                                <option value="">Selecione...</option>
+                                <option value="AC">AC</option>
+                                <option value="AL">AL</option>
+                                <option value="AP">AP</option>
+                                <option value="AM">AM</option>
+                                <option value="BA">BA</option>
+                                <option value="CE">CE</option>
+                                <option value="DF">DF</option>
+                                <option value="ES">ES</option>
+                                <option value="GO">GO</option>
+                                <option value="MA">MA</option>
+                                <option value="MT">MT</option>
+                                <option value="MS">MS</option>
+                                <option value="MG">MG</option>
+                                <option value="PA">PA</option>
+                                <option value="PB">PB</option>
+                                <option value="PR">PR</option>
+                                <option value="PE">PE</option>
+                                <option value="PI">PI</option>
+                                <option value="RJ">RJ</option>
+                                <option value="RN">RN</option>
+                                <option value="RS">RS</option>
+                                <option value="RO">RO</option>
+                                <option value="RR">RR</option>
+                                <option value="SC">SC</option>
+                                <option value="SP">SP</option>
+                                <option value="SE">SE</option>
+                                <option value="TO">TO</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ufDestino">UF de Destino:</label>
+                            <select id="ufDestino">
+                                <option value="">Selecione...</option>
+                                <option value="AC">AC</option>
+                                <option value="AL">AL</option>
+                                <option value="AP">AP</option>
+                                <option value="AM">AM</option>
+                                <option value="BA">BA</option>
+                                <option value="CE">CE</option>
+                                <option value="DF">DF</option>
+                                <option value="ES">ES</option>
+                                <option value="GO">GO</option>
+                                <option value="MA">MA</option>
+                                <option value="MT">MT</option>
+                                <option value="MS">MS</option>
+                                <option value="MG">MG</option>
+                                <option value="PA">PA</option>
+                                <option value="PB">PB</option>
+                                <option value="PR">PR</option>
+                                <option value="PE">PE</option>
+                                <option value="PI">PI</option>
+                                <option value="RJ">RJ</option>
+                                <option value="RN">RN</option>
+                                <option value="RS">RS</option>
+                                <option value="RO">RO</option>
+                                <option value="RR">RR</option>
+                                <option value="SC">SC</option>
+                                <option value="SP">SP</option>
+                                <option value="SE">SE</option>
+                                <option value="TO">TO</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="valorBase">Valor Base (R$):</label>
+                            <input type="text" id="valorBase" placeholder="0,00" oninput="formatarMoeda(this)">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">Calcular DIFAL Manual</button>
+
+                        <div id="resultadoManual" style="margin-top: 15px;"></div>
+                    </div>
                 </div>
 
-                <div id="detalhesContainer"></div>
+                <div class="section">
+                    <h2>Resultados dos Cálculos</h2>
+                    
+                    <div class="filtros">
+                        <input type="text" id="filtroTabela" placeholder="Filtrar por NF-e, UF, status..." oninput="filtrarTabela()">
+                        <select id="filtroStatus" onchange="filtrarTabela()">
+                            <option value="">Todos os status</option>
+                            <option value="Aplicável">Aplicável</option>
+                            <option value="Isento">Isento</option>
+                            <option value="Não Aplicável">Não Aplicável</option>
+                            <option value="Erro">Erro</option>
+                        </select>
+                    </div>
+
+                    <div class="tabela-container">
+                        <table class="tabela-resultados">
+                            <thead>
+                                <tr>
+                                    <th>NF-e</th>
+                                    <th>Origem</th>
+                                    <th>Destino</th>
+                                    <th>Valor Total</th>
+                                    <th>Aliq. Inter</th>
+                                    <th>Aliq. Interna</th>
+                                    <th>DIFAL</th>
+                                    <th>FCP</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaResultados">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 20px;">
+                                        Nenhum resultado disponível
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="detalhesContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabAdmin" class="tab-content">
+            <div class="admin-section">
+                <h2>📊 Administração de Alíquotas</h2>
+                <p>Edite as alíquotas internas e FCP conforme necessário. As alterações são salvas automaticamente.</p>
+                
+                <div class="controls">
+                    <button class="btn btn-success" onclick="salvarAliquotas()">Salvar Alíquotas</button>
+                    <button class="btn btn-primary" onclick="carregarAliquotasPadrao()">Restaurar Padrão</button>
+                    <button class="btn btn-info" onclick="exportarAliquotas()">Exportar Alíquotas</button>
+                    <button class="btn btn-warning" onclick="importarAliquotas()">Importar Alíquotas</button>
+                </div>
+
+                <div class="filtros">
+                    <input type="text" id="filtroAdmin" placeholder="Filtrar por estado..." oninput="filtrarTabelaAdmin()">
+                </div>
+
+                <table class="tabela-admin">
+                    <thead>
+                        <tr>
+                            <th>Estado</th>
+                            <th>Alíquota Interna (%)</th>
+                            <th>FCP (%)</th>
+                            <th>Última Atualização</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaAdmin">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                    <h4>ℹ️ Regras Interestaduais Atuais</h4>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Produtos importados:</strong> 4%</li>
+                        <li><strong>Sul/Sudeste (exceto ES) → Norte/Nordeste/Centro-Oeste/ES:</strong> 7%</li>
+                        <li><strong>Demais operações interestaduais:</strong> 12%</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                        * As regras interestaduais são calculadas automaticamente com base nas UFs de origem e destino.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Banco de dados completo e atualizado de alíquotas
-        const aliquotasInterestaduais = {
-            'AC': {}, 'AL': {}, 'AP': {}, 'AM': {}, 'BA': {}, 'CE': {}, 'DF': {}, 'ES': {}, 
-            'GO': {}, 'MA': {}, 'MT': {}, 'MS': {}, 'MG': {}, 'PA': {}, 'PB': {}, 'PR': {}, 
-            'PE': {}, 'PI': {}, 'RJ': {}, 'RN': {}, 'RS': {}, 'RO': {}, 'RR': {}, 'SC': {}, 
-            'SP': {}, 'SE': {}, 'TO': {}
+        // BANCO DE DADOS ATUALIZADO CONFORME PLANILHA
+        let aliquotasInternas = {
+            'AC': 19, 'AL': 20, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20, 'ES': 17, 
+            'GO': 19, 'MA': 23, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 19, 'PB': 20, 'PR': 19.5, 
+            'PE': 20.5, 'PI': 22.5, 'RJ': 22, 'RN': 20, 'RS': 17, 'RO': 19.5, 'RR': 20, 'SC': 17, 
+            'SP': 18, 'SE': 20, 'TO': 20
         };
 
-        // Preencher alíquotas interestaduais (regra geral: 7% para Norte/Nordeste, 12% para Sul/Sudeste/Centro-Oeste)
-        const estadosNorteNordeste = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'MA', 'PA', 'PB', 'PE', 'PI', 'RN', 'SE', 'TO', 'RR', 'RO'];
-        const estadosSulSudeste = ['ES', 'MG', 'PR', 'RJ', 'RS', 'SC', 'SP', 'DF', 'GO', 'MT', 'MS'];
-
-        estadosSulSudeste.forEach(origem => {
-            estadosNorteNordeste.forEach(destino => {
-                aliquotasInterestaduais[origem][destino] = 7; // 7% para operações de Sul/Sudeste para Norte/Nordeste
-            });
-            estadosSulSudeste.forEach(destino => {
-                if (origem !== destino) {
-                    aliquotasInterestaduais[origem][destino] = 12; // 12% entre estados do Sul/Sudeste
-                }
-            });
-        });
-
-        estadosNorteNordeste.forEach(origem => {
-            estadosSulSudeste.forEach(destino => {
-                aliquotasInterestaduais[origem][destino] = 12; // 12% para operações de Norte/Nordeste para Sul/Sudeste
-            });
-            estadosNorteNordeste.forEach(destino => {
-                if (origem !== destino) {
-                    aliquotasInterestaduais[origem][destino] = 7; // 7% entre estados do Norte/Nordeste
-                }
-            });
-        });
-
-        const aliquotasInternas = {
-            'AC': 17, 'AL': 18, 'AP': 18, 'AM': 18, 'BA': 18, 'CE': 18, 'DF': 18, 'ES': 17, 
-            'GO': 17, 'MA': 18, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 17, 'PB': 18, 'PR': 18, 
-            'PE': 18, 'PI': 18, 'RJ': 20, 'RN': 18, 'RS': 18, 'RO': 17.5, 'RR': 17, 'SC': 17, 
-            'SP': 18, 'SE': 18, 'TO': 18
-        };
-
-        const fundoPobreza = {
+        let fundoPobreza = {
             'AC': 0, 'AL': 0, 'AP': 0, 'AM': 0, 'BA': 0, 'CE': 0, 'DF': 0, 'ES': 0, 
             'GO': 0, 'MA': 0, 'MT': 0, 'MS': 0, 'MG': 0, 'PA': 0, 'PB': 0, 'PR': 0, 
             'PE': 0, 'PI': 0, 'RJ': 0, 'RN': 0, 'RS': 0, 'RO': 0, 'RR': 0, 'SC': 0, 
-            'SP': 2, 'SE': 0, 'TO': 0
+            'SP': 0, 'SE': 0, 'TO': 0
         };
 
         // Array para armazenar todos os cálculos
         let todosCalculos = [];
-        let debugData = [];
+        let cacheCalculos = new Map();
+        let configUsuario = {
+            autoProcessar: true,
+            manterHistorico: true,
+            formatoMoeda: 'BRL',
+            casasDecimais: 2
+        };
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             configurarUpload();
+            carregarConfiguracoes();
+            carregarHistorico();
+            carregarAliquotasSalvas();
+            renderizarTabelaAdmin();
         });
+
+        function abrirTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
 
         function configurarUpload() {
             const uploadArea = document.getElementById('uploadArea');
@@ -506,27 +704,136 @@
             fileInput.addEventListener('change', (e) => {
                 processarArquivos(e.target.files);
             });
+
+            // Configurar eventos de configuração
+            document.getElementById('autoProcessar').addEventListener('change', salvarConfiguracoes);
+            document.getElementById('manterHistorico').addEventListener('change', salvarConfiguracoes);
         }
 
-        function processarArquivos(files) {
-            debugData = [];
-            const promises = Array.from(files).map(file => {
-                if (file.name.endsWith('.xml')) {
-                    return new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            processarXMLReal(e.target.result, file.name);
-                            resolve();
-                        };
-                        reader.readAsText(file);
-                    });
-                }
-                return Promise.resolve();
-            });
+        function carregarConfiguracoes() {
+            const configSalva = localStorage.getItem('configDIFAL');
+            if (configSalva) {
+                configUsuario = { ...configUsuario, ...JSON.parse(configSalva) };
+                document.getElementById('autoProcessar').checked = configUsuario.autoProcessar;
+                document.getElementById('manterHistorico').checked = configUsuario.manterHistorico;
+            }
+        }
 
-            Promise.all(promises).then(() => {
-                atualizarResumo();
+        function salvarConfiguracoes() {
+            configUsuario.autoProcessar = document.getElementById('autoProcessar').checked;
+            configUsuario.manterHistorico = document.getElementById('manterHistorico').checked;
+            localStorage.setItem('configDIFAL', JSON.stringify(configUsuario));
+        }
+
+        function carregarAliquotasSalvas() {
+            const aliquotasSalvas = localStorage.getItem('aliquotasDIFAL');
+            if (aliquotasSalvas) {
+                const data = JSON.parse(aliquotasSalvas);
+                aliquotasInternas = data.aliquotasInternas || aliquotasInternas;
+                fundoPobreza = data.fundoPobreza || fundoPobreza;
+            }
+        }
+
+        function salvarAliquotas() {
+            const data = {
+                aliquotasInternas: aliquotasInternas,
+                fundoPobreza: fundoPobreza,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('aliquotasDIFAL', JSON.stringify(data));
+            alert('Alíquotas salvas com sucesso!');
+        }
+
+        function carregarHistorico() {
+            if (configUsuario.manterHistorico) {
+                const historico = localStorage.getItem('historicoDIFAL');
+                if (historico) {
+                    todosCalculos = JSON.parse(historico);
+                    atualizarTabela();
+                    atualizarResumo();
+                }
+            }
+        }
+
+        function salvarHistorico() {
+            if (configUsuario.manterHistorico) {
+                localStorage.setItem('historicoDIFAL', JSON.stringify(todosCalculos));
+            }
+        }
+
+        async function processarArquivos(files) {
+            const xmlFiles = Array.from(files).filter(file => file.name.endsWith('.xml'));
+            
+            if (xmlFiles.length === 0) {
+                alert('Nenhum arquivo XML encontrado.');
+                return;
+            }
+
+            mostrarProgresso(0, xmlFiles.length);
+
+            for (let i = 0; i < xmlFiles.length; i++) {
+                const file = xmlFiles[i];
+                await processarArquivoComRetry(file);
+                mostrarProgresso(i + 1, xmlFiles.length);
+            }
+
+            ocultarProgresso();
+            atualizarResumo();
+            salvarHistorico();
+            
+            if (configUsuario.autoProcessar) {
+                processarTodosXMLs();
+            }
+        }
+
+        function processarArquivoComRetry(file, tentativa = 0) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        processarXMLReal(e.target.result, file.name);
+                        resolve();
+                    } catch (error) {
+                        if (tentativa < 2) {
+                            setTimeout(() => {
+                                processarArquivoComRetry(file, tentativa + 1).then(resolve);
+                            }, 1000);
+                        } else {
+                            console.error('Erro ao processar arquivo após 3 tentativas:', file.name, error);
+                            resolve();
+                        }
+                    }
+                };
+                reader.onerror = () => resolve();
+                reader.readAsText(file);
             });
+        }
+
+        function mostrarProgresso(atual, total) {
+            const container = document.getElementById('progressoContainer');
+            const texto = document.getElementById('progressoTexto');
+            const fill = document.getElementById('progressoFill');
+            
+            const percentual = (atual / total) * 100;
+            texto.textContent = `Processando: ${atual}/${total} (${percentual.toFixed(1)}%)`;
+            fill.style.width = `${percentual}%`;
+            container.style.display = 'block';
+        }
+
+        function ocultarProgresso() {
+            document.getElementById('progressoContainer').style.display = 'none';
+        }
+
+        function calcularAliquotaInterestadual(origem, destino) {
+            // Regras conforme planilha
+            const estadosSulSudesteExcetoES = ['PR', 'RS', 'SC', 'SP', 'MG', 'RJ'];
+            const estadosDestino7 = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'PA', 'PB', 'PE', 'PI', 'RN', 'RO', 'RR', 'SE', 'TO'];
+            
+            if (estadosSulSudesteExcetoES.includes(origem) && estadosDestino7.includes(destino)) {
+                return 7; // Sul/Sudeste (exceto ES) → Norte/Nordeste/Centro-Oeste/ES
+            }
+            
+            return 12; // Demais operações interestaduais
         }
 
         function processarXMLReal(xmlContent, fileName) {
@@ -534,30 +841,22 @@
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
                 
-                // Verificar se é um XML válido
                 if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
                     throw new Error("XML inválido ou mal formado");
                 }
 
                 // Extrair dados principais da NFe
                 const infNFe = xmlDoc.getElementsByTagName("infNFe")[0];
-                if (!infNFe) {
-                    throw new Error("Estrutura NF-e não encontrada");
-                }
 
                 // Extrair UF de origem e destino
                 const emit = xmlDoc.getElementsByTagName("emit")[0];
                 const dest = xmlDoc.getElementsByTagName("dest")[0];
                 
-                if (!emit || !dest) {
-                    throw new Error("Emitente ou destinatário não encontrado");
-                }
-
-                const emitEnder = emit.getElementsByTagName("enderEmit")[0];
-                const destEnder = dest.getElementsByTagName("enderDest")[0];
+                const emitEnder = emit.getElementsByTagName("enderEmit")[0] || emit;
+                const destEnder = dest.getElementsByTagName("enderDest")[0] || dest;
                 
-                const emitUF = emitEnder ? emitEnder.getElementsByTagName("UF")[0]?.textContent : null;
-                const destUF = destEnder ? destEnder.getElementsByTagName("UF")[0]?.textContent : null;
+                const emitUF = emitEnder.getElementsByTagName("UF")[0]?.textContent;
+                const destUF = destEnder.getElementsByTagName("UF")[0]?.textContent;
 
                 if (!emitUF || !destUF) {
                     throw new Error("UF do emitente ou destinatário não encontrado");
@@ -571,6 +870,8 @@
                 const vProd = ICMSTot ? ICMSTot.getElementsByTagName("vProd")[0]?.textContent : "0";
                 const vFrete = ICMSTot ? ICMSTot.getElementsByTagName("vFrete")[0]?.textContent || "0" : "0";
                 const vSeg = ICMSTot ? ICMSTot.getElementsByTagName("vSeg")[0]?.textContent || "0" : "0";
+                const vDesc = ICMSTot ? ICMSTot.getElementsByTagName("vDesc")[0]?.textContent || "0" : "0";
+                const vOutro = ICMSTot ? ICMSTot.getElementsByTagName("vOutro")[0]?.textContent || "0" : "0";
 
                 // Determinar tipo de destinatário
                 const indIEDest = dest.getElementsByTagName("indIEDest")[0]?.textContent;
@@ -582,9 +883,9 @@
                     tipoDestinatario = 'isento';
                 }
 
-                // Calcular base de cálculo (usar vProd como fallback se vNF não disponível)
-                const baseCalculo = parseFloat(vProd) + parseFloat(vFrete) + parseFloat(vSeg);
-                const valorTotal = parseFloat(vNF) || baseCalculo;
+                // Calcular base de cálculo corretamente
+                const baseCalculo = sanitizarValor(vProd) + sanitizarValor(vFrete) + sanitizarValor(vSeg) - sanitizarValor(vDesc) + sanitizarValor(vOutro);
+                const valorTotal = sanitizarValor(vNF) || baseCalculo;
 
                 const calculo = {
                     id: Date.now() + Math.random(),
@@ -592,9 +893,11 @@
                     origem: emitUF,
                     destino: destUF,
                     tipoDestinatario: tipoDestinatario,
-                    valorOperacao: parseFloat(vProd),
-                    valorFrete: parseFloat(vFrete),
-                    valorSeguro: parseFloat(vSeg),
+                    valorOperacao: sanitizarValor(vProd),
+                    valorFrete: sanitizarValor(vFrete),
+                    valorSeguro: sanitizarValor(vSeg),
+                    valorDesconto: sanitizarValor(vDesc),
+                    valorOutros: sanitizarValor(vOutro),
                     baseCalculo: baseCalculo,
                     valorTotal: valorTotal,
                     status: 'Processado',
@@ -602,18 +905,8 @@
                     detalhes: []
                 };
 
-                debugData.push({
-                    arquivo: fileName,
-                    origem: emitUF,
-                    destino: destUF,
-                    baseCalculo: baseCalculo,
-                    valorTotal: valorTotal,
-                    tipoDestinatario: tipoDestinatario,
-                    indIEDest: indIEDest
-                });
-
-                // Calcular DIFAL
-                const resultado = calcularDIFALDetalhado(
+                // Calcular DIFAL usando cache
+                const resultado = calcularDIFALComCache(
                     calculo.origem,
                     calculo.destino,
                     calculo.tipoDestinatario,
@@ -627,11 +920,6 @@
                 
             } catch (error) {
                 console.error('Erro ao processar XML:', error);
-                debugData.push({
-                    arquivo: fileName,
-                    erro: error.message,
-                    stack: error.stack
-                });
                 
                 // Adicionar cálculo com erro para visualização
                 const calculoErro = {
@@ -656,6 +944,19 @@
             }
         }
 
+        function calcularDIFALComCache(origem, destino, tipoDestinatario, baseCalculo) {
+            const chave = `${origem}-${destino}-${tipoDestinatario}-${baseCalculo}`;
+            
+            if (cacheCalculos.has(chave)) {
+                return cacheCalculos.get(chave);
+            }
+            
+            const resultado = calcularDIFALDetalhado(origem, destino, tipoDestinatario, baseCalculo);
+            cacheCalculos.set(chave, resultado);
+            
+            return resultado;
+        }
+
         function calcularDIFALDetalhado(origem, destino, tipoDestinatario, baseCalculo) {
             // Verificar aplicabilidade primeiro
             const aplicavel = verificarAplicabilidade(origem, destino, tipoDestinatario);
@@ -669,22 +970,23 @@
                     total: 0,
                     aliqInterestadual: 0,
                     aliqInterna: 0,
+                    percFCP: 0,
                     detalhes: []
                 };
             }
             
-            // Obter alíquotas - usar valores padrão se não encontrado
-            const aliqInterestadual = aliquotasInterestaduais[origem]?.[destino] || 12;
+            // Obter alíquotas atualizadas
+            const aliqInterestadual = calcularAliquotaInterestadual(origem, destino);
             const aliqInterna = aliquotasInternas[destino] || 18;
             const percFCP = fundoPobreza[destino] || 0;
             
-            // Cálculo correto do DIFAL
+            // Cálculo correto do DIFAL conforme legislação
             const difal = baseCalculo * (aliqInterna - aliqInterestadual) / 100;
             const fcp = baseCalculo * percFCP / 100;
             const total = difal + fcp;
             
             const detalhes = [
-                { descricao: 'Base de Cálculo', valor: baseCalculo, formula: 'Valor Produtos + Frete + Seguro' },
+                { descricao: 'Base de Cálculo', valor: baseCalculo, formula: 'Valor Produtos + Frete + Seguro - Desconto + Outros' },
                 { descricao: 'Alíquota Interestadual', valor: aliqInterestadual, formula: `${origem} → ${destino}` },
                 { descricao: 'Alíquota Interna Destino', valor: aliqInterna, formula: `UF ${destino}` },
                 { descricao: 'Diferencial de Alíquota', valor: (aliqInterna - aliqInterestadual).toFixed(2), formula: `${aliqInterna}% - ${aliqInterestadual}%` },
@@ -710,20 +1012,63 @@
         }
 
         function verificarAplicabilidade(origem, destino, tipoDestinatario) {
-            // Verificar se é operação interestadual
             if (origem === destino) {
                 return { aplicavel: false, motivo: 'Operação interna (mesmo estado)' };
             }
-            
-            // Verificar se destinatário é contribuinte do ICMS
-            // No DIFAL, mesmo contribuintes do ICMS podem ter DIFAL aplicável em alguns casos
-            // mas para simplificar, vamos considerar as regras mais comuns
             
             if (tipoDestinatario === 'isento') {
                 return { aplicavel: false, motivo: 'Operação imune ou isenta' };
             }
             
+            // Verificar se as alíquotas são iguais (não há diferencial)
+            const aliqInterestadual = calcularAliquotaInterestadual(origem, destino);
+            const aliqInterna = aliquotasInternas[destino];
+            
+            if (aliqInterestadual === aliqInterna) {
+                return { aplicavel: false, motivo: 'Alíquotas iguais - sem diferencial' };
+            }
+            
             return { aplicavel: true, motivo: '' };
+        }
+
+        function sanitizarValor(valor) {
+            if (typeof valor === 'string') {
+                valor = valor.replace(/[^\d,.-]/g, '');
+                valor = valor.replace(',', '.');
+            }
+            
+            const numero = parseFloat(valor);
+            if (isNaN(numero) || numero < 0) {
+                return 0;
+            }
+            
+            return numero;
+        }
+
+        function formatarMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2) + '';
+            valor = valor.replace(".", ",");
+            valor = valor.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            valor = valor.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            input.value = valor;
+        }
+
+        function filtrarTabela() {
+            const filtroTexto = document.getElementById('filtroTabela').value.toLowerCase();
+            const filtroStatus = document.getElementById('filtroStatus').value;
+            
+            const linhas = document.querySelectorAll('#tabelaResultados tr');
+            
+            linhas.forEach(linha => {
+                const textoLinha = linha.textContent.toLowerCase();
+                const statusLinha = linha.querySelector('.status-applicable, .status-not-applicable, .status-exempt')?.textContent || '';
+                
+                const correspondeTexto = textoLinha.includes(filtroTexto);
+                const correspondeStatus = !filtroStatus || statusLinha.includes(filtroStatus);
+                
+                linha.style.display = (correspondeTexto && correspondeStatus) ? '' : 'none';
+            });
         }
 
         function atualizarTabela() {
@@ -776,6 +1121,8 @@
                 
                 tbody.appendChild(tr);
             });
+
+            filtrarTabela();
         }
 
         function mostrarDetalhes(calculo) {
@@ -789,6 +1136,7 @@
                     <div><strong>Tipo Destinatário:</strong> ${calculo.tipoDestinatario}</div>
                     <div><strong>Status:</strong> ${calculo.aplicavel ? (calculo.difal > 0 ? 'DIFAL Aplicável' : 'Isento') : 'Não Aplicável'}</div>
                     ${calculo.motivo ? `<div><strong>Motivo:</strong> ${calculo.motivo}</div>` : ''}
+                    <div><strong>Data/Hora:</strong> ${calculo.timestamp}</div>
                 </div>
             `;
             
@@ -859,7 +1207,34 @@
                 return;
             }
             
-            alert(`Processamento concluído! ${todosCalculos.length} NF-es processadas.`);
+            mostrarProgresso(0, todosCalculos.length);
+            
+            setTimeout(() => {
+                let processados = 0;
+                todosCalculos.forEach((calculo, index) => {
+                    if (calculo.status !== 'Erro' && calculo.aplicavel) {
+                        const resultado = calcularDIFALComCache(
+                            calculo.origem,
+                            calculo.destino,
+                            calculo.tipoDestinatario,
+                            calculo.baseCalculo
+                        );
+                        Object.assign(calculo, resultado);
+                    }
+                    processados++;
+                    
+                    if (processados % 5 === 0) {
+                        mostrarProgresso(processados, todosCalculos.length);
+                    }
+                });
+                
+                ocultarProgresso();
+                atualizarTabela();
+                atualizarResumo();
+                salvarHistorico();
+                
+                alert(`Processamento concluído! ${todosCalculos.length} NF-es processadas.`);
+            }, 100);
         }
 
         function exportarExcel() {
@@ -893,7 +1268,6 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Cálculos DIFAL');
             
-            // Auto-ajustar largura das colunas
             const colWidths = [];
             Object.keys(dadosExcel[0]).forEach(key => {
                 colWidths.push({ wch: Math.max(key.length, 12) });
@@ -903,36 +1277,54 @@
             XLSX.writeFile(workbook, `calculos_difal_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
+        function fazerBackup() {
+            if (todosCalculos.length === 0) {
+                alert('Não há dados para backup.');
+                return;
+            }
+
+            const backup = {
+                calculos: todosCalculos,
+                aliquotasInternas: aliquotasInternas,
+                fundoPobreza: fundoPobreza,
+                timestamp: new Date().toISOString(),
+                versao: '3.0',
+                totalRegistros: todosCalculos.length
+            };
+            
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_difal_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`Backup realizado com sucesso! ${todosCalculos.length} registros salvos.`);
+        }
+
         function limparTudo() {
             if (confirm('Tem certeza que deseja limpar todos os cálculos?')) {
                 todosCalculos = [];
-                debugData = [];
+                cacheCalculos.clear();
                 atualizarTabela();
                 atualizarResumo();
-                document.getElementById('debugInfo').style.display = 'none';
                 document.getElementById('resultadoManual').innerHTML = '';
+                localStorage.removeItem('historicoDIFAL');
             }
-        }
-
-        function mostrarDebug() {
-            const debugInfo = document.getElementById('debugInfo');
-            const debugContent = document.getElementById('debugContent');
-            
-            debugContent.innerHTML = JSON.stringify(debugData, null, 2);
-            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
         }
 
         function calcularManual() {
             const ufOrigem = document.getElementById('ufOrigem').value;
             const ufDestino = document.getElementById('ufDestino').value;
-            const valorBase = parseFloat(document.getElementById('valorBase').value);
+            const valorBase = sanitizarValor(document.getElementById('valorBase').value);
 
             if (!ufOrigem || !ufDestino || !valorBase || valorBase <= 0) {
                 alert('Por favor, preencha todos os campos com valores válidos.');
                 return;
             }
 
-            const resultado = calcularDIFALDetalhado(ufOrigem, ufDestino, 'consumidor', valorBase);
+            const resultado = calcularDIFALComCache(ufOrigem, ufDestino, 'consumidor', valorBase);
             exibirResultadoManual(resultado);
         }
 
@@ -947,6 +1339,7 @@
                 html += `<p><strong>Motivo:</strong> ${resultado.motivo}</p>`;
             } else {
                 html += `<h4>✅ Resultado do Cálculo DIFAL</h4>`;
+                html += `<p><strong>Origem:</strong> ${resultado.origem} → <strong>Destino:</strong> ${resultado.destino}</p>`;
                 
                 resultado.detalhes.forEach(detalhe => {
                     html += `
@@ -976,6 +1369,130 @@
             
             html += '</div>';
             resultadoDiv.innerHTML = html;
+        }
+
+        // FUNÇÕES DE ADMINISTRAÇÃO DE ALÍQUOTAS
+        function renderizarTabelaAdmin() {
+            const tbody = document.getElementById('tabelaAdmin');
+            tbody.innerHTML = '';
+
+            const estados = Object.keys(aliquotasInternas).sort();
+            
+            estados.forEach(estado => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${estado}</strong></td>
+                    <td>
+                        <input type="number" 
+                               value="${aliquotasInternas[estado]}" 
+                               step="0.1" 
+                               min="0" 
+                               max="100"
+                               onchange="atualizarAliquotaInterna('${estado}', this.value)"
+                               style="width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; text-align: center;">
+                        %
+                    </td>
+                    <td>
+                        <input type="number" 
+                               value="${fundoPobreza[estado] || 0}" 
+                               step="0.1" 
+                               min="0" 
+                               max="100"
+                               onchange="atualizarFCP('${estado}', this.value)"
+                               style="width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; text-align: center;">
+                        %
+                    </td>
+                    <td>${new Date().toLocaleDateString('pt-BR')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function atualizarAliquotaInterna(estado, valor) {
+            aliquotasInternas[estado] = parseFloat(valor) || 0;
+            cacheCalculos.clear(); // Limpar cache para recalcular com novas alíquotas
+        }
+
+        function atualizarFCP(estado, valor) {
+            fundoPobreza[estado] = parseFloat(valor) || 0;
+            cacheCalculos.clear(); // Limpar cache para recalcular com novas alíquotas
+        }
+
+        function filtrarTabelaAdmin() {
+            const filtro = document.getElementById('filtroAdmin').value.toUpperCase();
+            const linhas = document.querySelectorAll('#tabelaAdmin tr');
+            
+            linhas.forEach(linha => {
+                const estado = linha.cells[0].textContent;
+                linha.style.display = estado.includes(filtro) ? '' : 'none';
+            });
+        }
+
+        function carregarAliquotasPadrao() {
+            if (confirm('Isso irá restaurar as alíquotas padrão. Deseja continuar?')) {
+                aliquotasInternas = {
+                    'AC': 19, 'AL': 20, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20, 'ES': 17, 
+                    'GO': 19, 'MA': 23, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 19, 'PB': 20, 'PR': 19.5, 
+                    'PE': 20.5, 'PI': 22.5, 'RJ': 22, 'RN': 20, 'RS': 17, 'RO': 19.5, 'RR': 20, 'SC': 17, 
+                    'SP': 18, 'SE': 20, 'TO': 20
+                };
+                
+                fundoPobreza = {
+                    'AC': 0, 'AL': 0, 'AP': 0, 'AM': 0, 'BA': 0, 'CE': 0, 'DF': 0, 'ES': 0, 
+                    'GO': 0, 'MA': 0, 'MT': 0, 'MS': 0, 'MG': 0, 'PA': 0, 'PB': 0, 'PR': 0, 
+                    'PE': 0, 'PI': 0, 'RJ': 0, 'RN': 0, 'RS': 0, 'RO': 0, 'RR': 0, 'SC': 0, 
+                    'SP': 0, 'SE': 0, 'TO': 0
+                };
+                
+                renderizarTabelaAdmin();
+                cacheCalculos.clear();
+                alert('Alíquotas padrão restauradas com sucesso!');
+            }
+        }
+
+        function exportarAliquotas() {
+            const data = {
+                aliquotasInternas: aliquotasInternas,
+                fundoPobreza: fundoPobreza,
+                timestamp: new Date().toISOString(),
+                versao: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aliquotas_difal_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importarAliquotas() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.aliquotasInternas && data.fundoPobreza) {
+                            aliquotasInternas = data.aliquotasInternas;
+                            fundoPobreza = data.fundoPobreza;
+                            renderizarTabelaAdmin();
+                            cacheCalculos.clear();
+                            alert('Alíquotas importadas com sucesso!');
+                        } else {
+                            alert('Arquivo inválido. Estrutura de dados não reconhecida.');
+                        }
+                    } catch (error) {
+                        alert('Erro ao importar arquivo: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
         }
     </script>
 </body>
