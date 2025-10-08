@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora DIFAL Avançada</title>
+    <title>Calculadora DIFAL - Parser XML Real</title>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -47,6 +47,7 @@
             padding: 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -74,6 +75,11 @@
             color: white;
         }
 
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -91,37 +97,14 @@
             padding: 20px;
             border-radius: 10px;
             border: 1px solid #dee2e6;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         h2 {
             color: #2c3e50;
             margin-bottom: 20px;
             font-size: 1.5em;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #34495e;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: #3498db;
         }
 
         .upload-area {
@@ -139,21 +122,56 @@
             border-color: #2980b9;
         }
 
-        .resultado, .isencao {
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 10px;
-            animation: slideDown 0.3s ease;
+        .upload-area input {
+            display: none;
         }
 
-        .resultado {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border: 2px solid #28a745;
+        .resumo {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
 
-        .isencao {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 2px solid #ffc107;
+        .tabela-resultados {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .tabela-resultados th,
+        .tabela-resultados td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tabela-resultados th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .tabela-resultados tr:hover {
+            background: #e9ecef;
+        }
+
+        .status-applicable {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-not-applicable {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .status-exempt {
+            color: #f39c12;
+            font-weight: bold;
         }
 
         .detalhes-item {
@@ -173,34 +191,57 @@
             border-top: 2px solid #28a745;
         }
 
-        .tabela-resultados {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .tabela-resultados th,
-        .tabela-resultados td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .tabela-resultados th {
-            background: #34495e;
-            color: white;
-            font-weight: 600;
-        }
-
-        .tabela-resultados tr:hover {
-            background: #e9ecef;
-        }
-
-        .resumo {
-            background: #e3f2fd;
+        .xml-info {
+            background: #fff3cd;
             padding: 15px;
             border-radius: 8px;
-            margin-top: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 11px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .calculadora-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #3498db;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group select, 
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group select:focus, 
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
         }
 
         @keyframes slideDown {
@@ -218,83 +259,32 @@
             .main-content {
                 grid-template-columns: 1fr;
             }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .tabela-resultados {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🧮 Calculadora DIFAL Avançada</h1>
-            <p>Cálculo preciso do diferencial de alíquota do ICMS com exportação para Excel</p>
+            <h1>🧮 Calculadora DIFAL - Parser XML Real</h1>
+            <p>Processamento preciso de XMLs com cálculos corretos de DIFAL</p>
         </header>
 
         <div class="controls">
-            <button class="btn btn-primary" onclick="calcularTodos()">Calcular Todos</button>
+            <button class="btn btn-primary" onclick="processarTodosXMLs()">Processar Todos XMLs</button>
             <button class="btn btn-success" onclick="exportarExcel()">Exportar para Excel</button>
             <button class="btn btn-warning" onclick="limparTudo()">Limpar Tudo</button>
+            <button class="btn btn-danger" onclick="mostrarDebug()">Mostrar Debug</button>
         </div>
 
         <div class="main-content">
-            <div class="section">
-                <h2>Calculadora Manual</h2>
-                
-                <div class="form-group">
-                    <label for="ufOrigem">UF de Origem:</label>
-                    <select id="ufOrigem">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="ufDestino">UF de Destino:</label>
-                    <select id="ufDestino">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="tipoDestinatario">Tipo de Destinatário:</label>
-                    <select id="tipoDestinatario">
-                        <option value="consumidor">Consumidor Final (Pessoa Física)</option>
-                        <option value="simples">Empresa Simples Nacional</option>
-                        <option value="contribuinte">Contribuinte do ICMS</option>
-                        <option value="imune">Imune/Isenta</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="valorOperacao">Valor da Operação (R$):</label>
-                    <input type="number" id="valorOperacao" step="0.01" placeholder="0,00">
-                </div>
-
-                <div class="form-group">
-                    <label for="valorFrete">Valor do Frete (R$):</label>
-                    <input type="number" id="valorFrete" step="0.01" placeholder="0,00" value="0">
-                </div>
-
-                <div class="form-group">
-                    <label for="valorSeguro">Valor do Seguro (R$):</label>
-                    <input type="number" id="valorSeguro" step="0.01" placeholder="0,00" value="0">
-                </div>
-
-                <div class="form-group">
-                    <label for="ncm">NCM (Opcional):</label>
-                    <input type="text" id="ncm" placeholder="Ex: 8517.12.00">
-                </div>
-
-                <button class="btn btn-primary" onclick="calcularDIFAL()" style="width: 100%;">Calcular DIFAL</button>
-
-                <div id="resultado" class="resultado" style="display: none;">
-                    <h3>Resultado do Cálculo</h3>
-                    <div id="detalhesCalculo"></div>
-                </div>
-
-                <div id="isencao" class="isencao" style="display: none;">
-                    <h3>⚠️ DIFAL Não Aplicável</h3>
-                    <p id="motivoIsencao"></p>
-                </div>
-            </div>
-
             <div class="section">
                 <h2>Importar NFes (XML)</h2>
                 <div class="upload-area" id="uploadArea">
@@ -302,15 +292,103 @@
                     <div class="upload-placeholder">
                         <span>📁 Arraste XMLs aqui ou clique para selecionar</span>
                         <br>
-                        <small>Suporte para múltiplos arquivos</small>
+                        <small>Suporte para múltiplos arquivos - Processamento real de XML</small>
                     </div>
                 </div>
 
                 <div class="resumo">
                     <h4>Resumo dos Cálculos</h4>
-                    <div id="resumoCalculos"></div>
+                    <div id="resumoCalculos">Nenhum XML processado</div>
                 </div>
 
+                <div id="debugInfo" style="display: none;">
+                    <h4>Informações de Debug</h4>
+                    <div id="debugContent" class="debug-info"></div>
+                </div>
+
+                <div class="calculadora-section">
+                    <h3>Calculadora Manual</h3>
+                    <div class="form-group">
+                        <label for="ufOrigem">UF de Origem:</label>
+                        <select id="ufOrigem">
+                            <option value="">Selecione...</option>
+                            <option value="AC">AC</option>
+                            <option value="AL">AL</option>
+                            <option value="AP">AP</option>
+                            <option value="AM">AM</option>
+                            <option value="BA">BA</option>
+                            <option value="CE">CE</option>
+                            <option value="DF">DF</option>
+                            <option value="ES">ES</option>
+                            <option value="GO">GO</option>
+                            <option value="MA">MA</option>
+                            <option value="MT">MT</option>
+                            <option value="MS">MS</option>
+                            <option value="MG">MG</option>
+                            <option value="PA">PA</option>
+                            <option value="PB">PB</option>
+                            <option value="PR">PR</option>
+                            <option value="PE">PE</option>
+                            <option value="PI">PI</option>
+                            <option value="RJ">RJ</option>
+                            <option value="RN">RN</option>
+                            <option value="RS">RS</option>
+                            <option value="RO">RO</option>
+                            <option value="RR">RR</option>
+                            <option value="SC">SC</option>
+                            <option value="SP">SP</option>
+                            <option value="SE">SE</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ufDestino">UF de Destino:</label>
+                        <select id="ufDestino">
+                            <option value="">Selecione...</option>
+                            <option value="AC">AC</option>
+                            <option value="AL">AL</option>
+                            <option value="AP">AP</option>
+                            <option value="AM">AM</option>
+                            <option value="BA">BA</option>
+                            <option value="CE">CE</option>
+                            <option value="DF">DF</option>
+                            <option value="ES">ES</option>
+                            <option value="GO">GO</option>
+                            <option value="MA">MA</option>
+                            <option value="MT">MT</option>
+                            <option value="MS">MS</option>
+                            <option value="MG">MG</option>
+                            <option value="PA">PA</option>
+                            <option value="PB">PB</option>
+                            <option value="PR">PR</option>
+                            <option value="PE">PE</option>
+                            <option value="PI">PI</option>
+                            <option value="RJ">RJ</option>
+                            <option value="RN">RN</option>
+                            <option value="RS">RS</option>
+                            <option value="RO">RO</option>
+                            <option value="RR">RR</option>
+                            <option value="SC">SC</option>
+                            <option value="SP">SP</option>
+                            <option value="SE">SE</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="valorBase">Valor Base (R$):</label>
+                        <input type="number" id="valorBase" step="0.01" placeholder="0,00">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">Calcular DIFAL Manual</button>
+
+                    <div id="resultadoManual" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Resultados dos Cálculos</h2>
                 <div class="tabela-container">
                     <table class="tabela-resultados">
                         <thead>
@@ -318,67 +396,86 @@
                                 <th>NF-e</th>
                                 <th>Origem</th>
                                 <th>Destino</th>
-                                <th>Valor</th>
+                                <th>Valor Total</th>
+                                <th>Aliq. Inter</th>
+                                <th>Aliq. Interna</th>
                                 <th>DIFAL</th>
+                                <th>FCP</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaResultados">
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 20px;">
+                                    Nenhum resultado disponível
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+
+                <div id="detalhesContainer"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Banco de dados completo de alíquotas
+        // Banco de dados completo e atualizado de alíquotas
         const aliquotasInterestaduais = {
-            'SP': { 'MG': 12, 'RJ': 12, 'ES': 12, 'RS': 12, 'PR': 12, 'SC': 12, 'DF': 12, 'GO': 12, 'MT': 12, 'MS': 12, 'AC': 7, 'AL': 7, 'AM': 7, 'AP': 7, 'BA': 7, 'CE': 7, 'MA': 7, 'PA': 7, 'PB': 7, 'PE': 7, 'PI': 7, 'RN': 7, 'RO': 7, 'RR': 7, 'SE': 7, 'TO': 7 },
-            'MG': { 'SP': 12, 'RJ': 12, 'ES': 12, 'RS': 12, 'PR': 12, 'SC': 12, 'DF': 12, 'GO': 12, 'MT': 12, 'MS': 12, 'AC': 7, 'AL': 7, 'AM': 7, 'AP': 7, 'BA': 7, 'CE': 7, 'MA': 7, 'PA': 7, 'PB': 7, 'PE': 7, 'PI': 7, 'RN': 7, 'RO': 7, 'RR': 7, 'SE': 7, 'TO': 7 },
-            'RJ': { 'SP': 12, 'MG': 12, 'ES': 12, 'RS': 12, 'PR': 12, 'SC': 12, 'DF': 12, 'GO': 12, 'MT': 12, 'MS': 12, 'AC': 7, 'AL': 7, 'AM': 7, 'AP': 7, 'BA': 7, 'CE': 7, 'MA': 7, 'PA': 7, 'PB': 7, 'PE': 7, 'PI': 7, 'RN': 7, 'RO': 7, 'RR': 7, 'SE': 7, 'TO': 7 },
-            // ... (outros estados como no código anterior)
+            'AC': {}, 'AL': {}, 'AP': {}, 'AM': {}, 'BA': {}, 'CE': {}, 'DF': {}, 'ES': {}, 
+            'GO': {}, 'MA': {}, 'MT': {}, 'MS': {}, 'MG': {}, 'PA': {}, 'PB': {}, 'PR': {}, 
+            'PE': {}, 'PI': {}, 'RJ': {}, 'RN': {}, 'RS': {}, 'RO': {}, 'RR': {}, 'SC': {}, 
+            'SP': {}, 'SE': {}, 'TO': {}
         };
 
+        // Preencher alíquotas interestaduais (regra geral: 7% para Norte/Nordeste, 12% para Sul/Sudeste/Centro-Oeste)
+        const estadosNorteNordeste = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'MA', 'PA', 'PB', 'PE', 'PI', 'RN', 'SE', 'TO', 'RR', 'RO'];
+        const estadosSulSudeste = ['ES', 'MG', 'PR', 'RJ', 'RS', 'SC', 'SP', 'DF', 'GO', 'MT', 'MS'];
+
+        estadosSulSudeste.forEach(origem => {
+            estadosNorteNordeste.forEach(destino => {
+                aliquotasInterestaduais[origem][destino] = 7; // 7% para operações de Sul/Sudeste para Norte/Nordeste
+            });
+            estadosSulSudeste.forEach(destino => {
+                if (origem !== destino) {
+                    aliquotasInterestaduais[origem][destino] = 12; // 12% entre estados do Sul/Sudeste
+                }
+            });
+        });
+
+        estadosNorteNordeste.forEach(origem => {
+            estadosSulSudeste.forEach(destino => {
+                aliquotasInterestaduais[origem][destino] = 12; // 12% para operações de Norte/Nordeste para Sul/Sudeste
+            });
+            estadosNorteNordeste.forEach(destino => {
+                if (origem !== destino) {
+                    aliquotasInterestaduais[origem][destino] = 7; // 7% entre estados do Norte/Nordeste
+                }
+            });
+        });
+
         const aliquotasInternas = {
-            'SP': 18, 'MG': 18, 'RJ': 20, 'ES': 17, 'RS': 18, 'PR': 18, 'SC': 17, 
-            'DF': 18, 'GO': 17, 'MT': 17, 'MS': 17, 'AC': 17, 'AL': 18, 'AM': 18, 
-            'AP': 18, 'BA': 18, 'CE': 18, 'MA': 18, 'PA': 17, 'PB': 18, 'PE': 18, 
-            'PI': 18, 'RN': 18, 'RO': 17.5, 'RR': 17, 'SE': 18, 'TO': 18
+            'AC': 17, 'AL': 18, 'AP': 18, 'AM': 18, 'BA': 18, 'CE': 18, 'DF': 18, 'ES': 17, 
+            'GO': 17, 'MA': 18, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 17, 'PB': 18, 'PR': 18, 
+            'PE': 18, 'PI': 18, 'RJ': 20, 'RN': 18, 'RS': 18, 'RO': 17.5, 'RR': 17, 'SC': 17, 
+            'SP': 18, 'SE': 18, 'TO': 18
         };
 
         const fundoPobreza = {
-            'SP': 2, 'MG': 0, 'RJ': 0, 'ES': 0, 'RS': 0, 'PR': 0, 'SC': 0,
-            'DF': 0, 'GO': 0, 'MT': 0, 'MS': 0, 'AC': 0, 'AL': 0, 'AM': 0,
-            'AP': 0, 'BA': 0, 'CE': 0, 'MA': 0, 'PA': 0, 'PB': 0, 'PE': 0,
-            'PI': 0, 'RN': 0, 'RO': 0, 'RR': 0, 'SE': 0, 'TO': 0
+            'AC': 0, 'AL': 0, 'AP': 0, 'AM': 0, 'BA': 0, 'CE': 0, 'DF': 0, 'ES': 0, 
+            'GO': 0, 'MA': 0, 'MT': 0, 'MS': 0, 'MG': 0, 'PA': 0, 'PB': 0, 'PR': 0, 
+            'PE': 0, 'PI': 0, 'RJ': 0, 'RN': 0, 'RS': 0, 'RO': 0, 'RR': 0, 'SC': 0, 
+            'SP': 2, 'SE': 0, 'TO': 0
         };
-
-        const estados = [
-            'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
-            'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
-            'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-        ];
 
         // Array para armazenar todos os cálculos
         let todosCalculos = [];
+        let debugData = [];
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            popularSelects();
             configurarUpload();
-            atualizarResumo();
         });
-
-        function popularSelects() {
-            const ufOrigem = document.getElementById('ufOrigem');
-            const ufDestino = document.getElementById('ufDestino');
-            
-            estados.forEach(uf => {
-                ufOrigem.appendChild(new Option(uf, uf));
-                ufDestino.appendChild(new Option(uf, uf));
-            });
-        }
 
         function configurarUpload() {
             const uploadArea = document.getElementById('uploadArea');
@@ -412,35 +509,108 @@
         }
 
         function processarArquivos(files) {
-            Array.from(files).forEach(file => {
+            debugData = [];
+            const promises = Array.from(files).map(file => {
                 if (file.name.endsWith('.xml')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        processarXML(e.target.result, file.name);
-                    };
-                    reader.readAsText(file);
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            processarXMLReal(e.target.result, file.name);
+                            resolve();
+                        };
+                        reader.readAsText(file);
+                    });
                 }
+                return Promise.resolve();
+            });
+
+            Promise.all(promises).then(() => {
+                atualizarResumo();
             });
         }
 
-        function processarXML(xmlContent, fileName) {
+        function processarXMLReal(xmlContent, fileName) {
             try {
-                // Simulação de parser XML - em produção usar biblioteca como xml2js
-                const dadosNFe = extrairDadosXML(xmlContent);
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
                 
+                // Verificar se é um XML válido
+                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    throw new Error("XML inválido ou mal formado");
+                }
+
+                // Extrair dados principais da NFe
+                const infNFe = xmlDoc.getElementsByTagName("infNFe")[0];
+                if (!infNFe) {
+                    throw new Error("Estrutura NF-e não encontrada");
+                }
+
+                // Extrair UF de origem e destino
+                const emit = xmlDoc.getElementsByTagName("emit")[0];
+                const dest = xmlDoc.getElementsByTagName("dest")[0];
+                
+                if (!emit || !dest) {
+                    throw new Error("Emitente ou destinatário não encontrado");
+                }
+
+                const emitEnder = emit.getElementsByTagName("enderEmit")[0];
+                const destEnder = dest.getElementsByTagName("enderDest")[0];
+                
+                const emitUF = emitEnder ? emitEnder.getElementsByTagName("UF")[0]?.textContent : null;
+                const destUF = destEnder ? destEnder.getElementsByTagName("UF")[0]?.textContent : null;
+
+                if (!emitUF || !destUF) {
+                    throw new Error("UF do emitente ou destinatário não encontrado");
+                }
+
+                // Extrair valores
+                const total = xmlDoc.getElementsByTagName("total")[0];
+                const ICMSTot = total ? total.getElementsByTagName("ICMSTot")[0] : null;
+                
+                const vNF = ICMSTot ? ICMSTot.getElementsByTagName("vNF")[0]?.textContent : "0";
+                const vProd = ICMSTot ? ICMSTot.getElementsByTagName("vProd")[0]?.textContent : "0";
+                const vFrete = ICMSTot ? ICMSTot.getElementsByTagName("vFrete")[0]?.textContent || "0" : "0";
+                const vSeg = ICMSTot ? ICMSTot.getElementsByTagName("vSeg")[0]?.textContent || "0" : "0";
+
+                // Determinar tipo de destinatário
+                const indIEDest = dest.getElementsByTagName("indIEDest")[0]?.textContent;
+                let tipoDestinatario = 'consumidor';
+                
+                if (indIEDest === '1') {
+                    tipoDestinatario = 'contribuinte';
+                } else if (indIEDest === '2' || indIEDest === '9') {
+                    tipoDestinatario = 'isento';
+                }
+
+                // Calcular base de cálculo (usar vProd como fallback se vNF não disponível)
+                const baseCalculo = parseFloat(vProd) + parseFloat(vFrete) + parseFloat(vSeg);
+                const valorTotal = parseFloat(vNF) || baseCalculo;
+
                 const calculo = {
                     id: Date.now() + Math.random(),
                     fileName: fileName,
-                    origem: dadosNFe.origem,
-                    destino: dadosNFe.destino,
-                    tipoDestinatario: dadosNFe.tipoDestinatario,
-                    valorOperacao: dadosNFe.valorOperacao,
-                    valorFrete: dadosNFe.valorFrete,
-                    valorSeguro: dadosNFe.valorSeguro,
-                    baseCalculo: dadosNFe.baseCalculo,
+                    origem: emitUF,
+                    destino: destUF,
+                    tipoDestinatario: tipoDestinatario,
+                    valorOperacao: parseFloat(vProd),
+                    valorFrete: parseFloat(vFrete),
+                    valorSeguro: parseFloat(vSeg),
+                    baseCalculo: baseCalculo,
+                    valorTotal: valorTotal,
                     status: 'Processado',
-                    timestamp: new Date().toLocaleString()
+                    timestamp: new Date().toLocaleString(),
+                    detalhes: []
                 };
+
+                debugData.push({
+                    arquivo: fileName,
+                    origem: emitUF,
+                    destino: destUF,
+                    baseCalculo: baseCalculo,
+                    valorTotal: valorTotal,
+                    tipoDestinatario: tipoDestinatario,
+                    indIEDest: indIEDest
+                });
 
                 // Calcular DIFAL
                 const resultado = calcularDIFALDetalhado(
@@ -454,64 +624,40 @@
                 todosCalculos.push(calculo);
                 
                 atualizarTabela();
-                atualizarResumo();
                 
             } catch (error) {
                 console.error('Erro ao processar XML:', error);
-                alert(`Erro ao processar ${fileName}: ${error.message}`);
+                debugData.push({
+                    arquivo: fileName,
+                    erro: error.message,
+                    stack: error.stack
+                });
+                
+                // Adicionar cálculo com erro para visualização
+                const calculoErro = {
+                    id: Date.now() + Math.random(),
+                    fileName: fileName,
+                    origem: 'ERRO',
+                    destino: 'ERRO',
+                    tipoDestinatario: 'erro',
+                    baseCalculo: 0,
+                    valorTotal: 0,
+                    status: 'Erro',
+                    timestamp: new Date().toLocaleString(),
+                    aplicavel: false,
+                    motivo: error.message,
+                    difal: 0,
+                    fcp: 0,
+                    total: 0
+                };
+                
+                todosCalculos.push(calculoErro);
+                atualizarTabela();
             }
-        }
-
-        function extrairDadosXML(xmlContent) {
-            // Simulação de extração de dados do XML
-            // Em produção, usar parser XML real
-            
-            const estadosValidos = ['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'ES'];
-            const origem = estadosValidos[Math.floor(Math.random() * estadosValidos.length)];
-            let destino;
-            do {
-                destino = estadosValidos[Math.floor(Math.random() * estadosValidos.length)];
-            } while (destino === origem);
-            
-            const tipos = ['consumidor', 'simples', 'contribuinte', 'imune'];
-            const tipoDestinatario = tipos[Math.floor(Math.random() * tipos.length)];
-            
-            const valorOperacao = parseFloat((Math.random() * 5000 + 100).toFixed(2));
-            const valorFrete = parseFloat((Math.random() * 100).toFixed(2));
-            const valorSeguro = parseFloat((Math.random() * 50).toFixed(2));
-            const baseCalculo = valorOperacao + valorFrete + valorSeguro;
-            
-            return {
-                origem,
-                destino,
-                tipoDestinatario,
-                valorOperacao,
-                valorFrete,
-                valorSeguro,
-                baseCalculo
-            };
-        }
-
-        function calcularDIFAL() {
-            const ufOrigem = document.getElementById('ufOrigem').value;
-            const ufDestino = document.getElementById('ufDestino').value;
-            const tipoDestinatario = document.getElementById('tipoDestinatario').value;
-            const valorOperacao = parseFloat(document.getElementById('valorOperacao').value) || 0;
-            const valorFrete = parseFloat(document.getElementById('valorFrete').value) || 0;
-            const valorSeguro = parseFloat(document.getElementById('valorSeguro').value) || 0;
-            const baseCalculo = valorOperacao + valorFrete + valorSeguro;
-            
-            // Validações
-            if (!ufOrigem || !ufDestino || baseCalculo <= 0) {
-                alert('Por favor, preencha todos os campos obrigatórios com valores válidos.');
-                return;
-            }
-            
-            const resultado = calcularDIFALDetalhado(ufOrigem, ufDestino, tipoDestinatario, baseCalculo);
-            exibirResultadoManual(resultado);
         }
 
         function calcularDIFALDetalhado(origem, destino, tipoDestinatario, baseCalculo) {
+            // Verificar aplicabilidade primeiro
             const aplicavel = verificarAplicabilidade(origem, destino, tipoDestinatario);
             
             if (!aplicavel.aplicavel) {
@@ -521,23 +667,27 @@
                     difal: 0,
                     fcp: 0,
                     total: 0,
+                    aliqInterestadual: 0,
+                    aliqInterna: 0,
                     detalhes: []
                 };
             }
             
+            // Obter alíquotas - usar valores padrão se não encontrado
             const aliqInterestadual = aliquotasInterestaduais[origem]?.[destino] || 12;
             const aliqInterna = aliquotasInternas[destino] || 18;
             const percFCP = fundoPobreza[destino] || 0;
             
+            // Cálculo correto do DIFAL
             const difal = baseCalculo * (aliqInterna - aliqInterestadual) / 100;
             const fcp = baseCalculo * percFCP / 100;
             const total = difal + fcp;
             
             const detalhes = [
-                { descricao: 'Base de Cálculo', valor: baseCalculo, formula: 'Valor Operação + Frete + Seguro' },
+                { descricao: 'Base de Cálculo', valor: baseCalculo, formula: 'Valor Produtos + Frete + Seguro' },
                 { descricao: 'Alíquota Interestadual', valor: aliqInterestadual, formula: `${origem} → ${destino}` },
                 { descricao: 'Alíquota Interna Destino', valor: aliqInterna, formula: `UF ${destino}` },
-                { descricao: 'Diferencial de Alíquota', valor: aliqInterna - aliqInterestadual, formula: `${aliqInterna}% - ${aliqInterestadual}%` },
+                { descricao: 'Diferencial de Alíquota', valor: (aliqInterna - aliqInterestadual).toFixed(2), formula: `${aliqInterna}% - ${aliqInterestadual}%` },
                 { descricao: 'Cálculo DIFAL', valor: difal, formula: `R$ ${baseCalculo.toFixed(2)} × ${(aliqInterna - aliqInterestadual).toFixed(2)}%` },
                 { descricao: 'Fundo Combate à Pobreza', valor: percFCP, formula: `${percFCP}%` },
                 { descricao: 'Valor FCP', valor: fcp, formula: `R$ ${baseCalculo.toFixed(2)} × ${percFCP}%` }
@@ -554,139 +704,162 @@
                 difal,
                 fcp,
                 total,
-                detalhes
+                detalhes,
+                motivo: ''
             };
         }
 
         function verificarAplicabilidade(origem, destino, tipoDestinatario) {
+            // Verificar se é operação interestadual
             if (origem === destino) {
                 return { aplicavel: false, motivo: 'Operação interna (mesmo estado)' };
             }
             
-            if (tipoDestinatario === 'contribuinte') {
-                return { aplicavel: false, motivo: 'Destinatário é contribuinte do ICMS' };
-            }
+            // Verificar se destinatário é contribuinte do ICMS
+            // No DIFAL, mesmo contribuintes do ICMS podem ter DIFAL aplicável em alguns casos
+            // mas para simplificar, vamos considerar as regras mais comuns
             
-            if (tipoDestinatario === 'imune') {
+            if (tipoDestinatario === 'isento') {
                 return { aplicavel: false, motivo: 'Operação imune ou isenta' };
             }
             
             return { aplicavel: true, motivo: '' };
         }
 
-        function exibirResultadoManual(resultado) {
-            const resultadoDiv = document.getElementById('resultado');
-            const isencaoDiv = document.getElementById('isencao');
-            const detalhesDiv = document.getElementById('detalhesCalculo');
+        function atualizarTabela() {
+            const tbody = document.getElementById('tabelaResultados');
+            const detalhesContainer = document.getElementById('detalhesContainer');
             
-            resultadoDiv.style.display = 'none';
-            isencaoDiv.style.display = 'none';
+            tbody.innerHTML = '';
+            detalhesContainer.innerHTML = '';
             
-            if (!resultado.aplicavel) {
-                isencaoDiv.style.display = 'block';
-                document.getElementById('motivoIsencao').textContent = resultado.motivo;
+            if (todosCalculos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px;">
+                            Nenhum resultado disponível
+                        </td>
+                    </tr>
+                `;
                 return;
             }
             
-            let html = '';
-            resultado.detalhes.forEach(detalhe => {
-                html += `
-                    <div class="detalhes-item">
-                        <span>${detalhe.descricao}:</span>
-                        <span>
-                            ${typeof detalhe.valor === 'number' ? 
-                              (detalhe.descricao.includes('Alíquota') || detalhe.descricao.includes('Fundo') ? 
-                               `${detalhe.valor}%` : `R$ ${detalhe.valor.toFixed(2)}`) : 
-                              detalhe.valor}
-                            ${detalhe.formula ? `<br><small style="color: #666;">${detalhe.formula}</small>` : ''}
-                        </span>
-                    </div>
-                `;
-            });
-            
-            html += `
-                <div class="detalhes-total">
-                    <span>TOTAL A RECOLHER (DIFAL + FCP):</span>
-                    <span>R$ ${resultado.total.toFixed(2)}</span>
-                </div>
-                <div style="margin-top: 15px; padding: 10px; background: #d1ecf1; border-radius: 5px;">
-                    <small>💡 Recolhimento via GNRE para o estado de ${resultado.destino}</small>
-                </div>
-            `;
-            
-            detalhesDiv.innerHTML = html;
-            resultadoDiv.style.display = 'block';
-        }
-
-        function atualizarTabela() {
-            const tbody = document.getElementById('tabelaResultados');
-            tbody.innerHTML = '';
-            
-            todosCalculos.forEach(calculo => {
+            todosCalculos.forEach((calculo, index) => {
                 const tr = document.createElement('tr');
                 
-                const statusClass = calculo.aplicavel ? 
+                const statusClass = calculo.status === 'Erro' ? 'status-not-applicable' : 
+                    calculo.aplicavel ? 
                     (calculo.difal > 0 ? 'status-applicable' : 'status-exempt') : 
                     'status-not-applicable';
                 
-                const statusText = calculo.aplicavel ? 
+                const statusText = calculo.status === 'Erro' ? 'Erro' :
+                    calculo.aplicavel ? 
                     (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 
                     'Não Aplicável';
                 
                 tr.innerHTML = `
-                    <td>${calculo.fileName}</td>
+                    <td title="${calculo.fileName}">${calculo.fileName.length > 20 ? calculo.fileName.substring(0, 20) + '...' : calculo.fileName}</td>
                     <td>${calculo.origem}</td>
                     <td>${calculo.destino}</td>
-                    <td>R$ ${calculo.baseCalculo?.toFixed(2) || '0.00'}</td>
+                    <td>R$ ${calculo.valorTotal?.toFixed(2) || calculo.baseCalculo?.toFixed(2) || '0.00'}</td>
+                    <td>${calculo.aliqInterestadual?.toFixed(2) || '0.00'}%</td>
+                    <td>${calculo.aliqInterna?.toFixed(2) || '0.00'}%</td>
                     <td>R$ ${calculo.difal?.toFixed(2) || '0.00'}</td>
+                    <td>R$ ${calculo.fcp?.toFixed(2) || '0.00'}</td>
                     <td><span class="${statusClass}">${statusText}</span></td>
                 `;
                 
+                if (calculo.status !== 'Erro') {
+                    tr.addEventListener('click', () => mostrarDetalhes(calculo));
+                    tr.style.cursor = 'pointer';
+                }
+                
                 tbody.appendChild(tr);
             });
+        }
+
+        function mostrarDetalhes(calculo) {
+            const detalhesContainer = document.getElementById('detalhesContainer');
+            
+            let html = `
+                <div class="xml-info">
+                    <h3>Detalhes do Cálculo - ${calculo.fileName}</h3>
+                    <div><strong>Origem:</strong> ${calculo.origem}</div>
+                    <div><strong>Destino:</strong> ${calculo.destino}</div>
+                    <div><strong>Tipo Destinatário:</strong> ${calculo.tipoDestinatario}</div>
+                    <div><strong>Status:</strong> ${calculo.aplicavel ? (calculo.difal > 0 ? 'DIFAL Aplicável' : 'Isento') : 'Não Aplicável'}</div>
+                    ${calculo.motivo ? `<div><strong>Motivo:</strong> ${calculo.motivo}</div>` : ''}
+                </div>
+            `;
+            
+            if (calculo.aplicavel && calculo.detalhes.length > 0) {
+                html += '<div class="resultado" style="display: block; background: #d4edda; padding: 15px; border-radius: 8px; margin-top: 10px;">';
+                html += '<h4>Detalhamento do Cálculo</h4>';
+                
+                calculo.detalhes.forEach(detalhe => {
+                    html += `
+                        <div class="detalhes-item">
+                            <span>${detalhe.descricao}:</span>
+                            <span>
+                                ${typeof detalhe.valor === 'number' ? 
+                                  (detalhe.descricao.includes('Alíquota') || detalhe.descricao.includes('Fundo') ? 
+                                   `${detalhe.valor}%` : `R$ ${detalhe.valor.toFixed(2)}`) : 
+                                  detalhe.valor}
+                                ${detalhe.formula ? `<br><small style="color: #666;">${detalhe.formula}</small>` : ''}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="detalhes-total">
+                        <span>TOTAL A RECOLHER (DIFAL + FCP):</span>
+                        <span>R$ ${calculo.total.toFixed(2)}</span>
+                    </div>
+                `;
+                
+                html += '</div>';
+            }
+            
+            detalhesContainer.innerHTML = html;
         }
 
         function atualizarResumo() {
             const resumoDiv = document.getElementById('resumoCalculos');
             
             const totalNFes = todosCalculos.length;
+            const totalProcessados = todosCalculos.filter(c => c.status !== 'Erro').length;
+            const totalErros = todosCalculos.filter(c => c.status === 'Erro').length;
             const totalAplicavel = todosCalculos.filter(c => c.aplicavel && c.difal > 0).length;
             const totalIsento = todosCalculos.filter(c => c.aplicavel && c.difal === 0).length;
-            const totalNaoAplicavel = todosCalculos.filter(c => !c.aplicavel).length;
+            const totalNaoAplicavel = todosCalculos.filter(c => !c.aplicavel && c.status !== 'Erro').length;
             const totalValor = todosCalculos.reduce((sum, c) => sum + (c.difal || 0), 0);
             const totalFCP = todosCalculos.reduce((sum, c) => sum + (c.fcp || 0), 0);
+            const totalBaseCalculo = todosCalculos.reduce((sum, c) => sum + (c.baseCalculo || 0), 0);
             
             resumoDiv.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <div>
-                        <strong>Total NF-es:</strong> ${totalNFes}
-                    </div>
-                    <div>
-                        <strong>DIFAL Aplicável:</strong> ${totalAplicavel}
-                    </div>
-                    <div>
-                        <strong>Isentos:</strong> ${totalIsento}
-                    </div>
-                    <div>
-                        <strong>Não Aplicável:</strong> ${totalNaoAplicavel}
-                    </div>
-                    <div>
-                        <strong>Total DIFAL:</strong> R$ ${totalValor.toFixed(2)}
-                    </div>
-                    <div>
-                        <strong>Total FCP:</strong> R$ ${totalFCP.toFixed(2)}
-                    </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px;">
+                    <div><strong>Total NF-es:</strong> ${totalNFes}</div>
+                    <div><strong>Processados:</strong> ${totalProcessados}</div>
+                    <div><strong>Erros:</strong> ${totalErros}</div>
+                    <div><strong>DIFAL Aplicável:</strong> ${totalAplicavel}</div>
+                    <div><strong>Isentos:</strong> ${totalIsento}</div>
+                    <div><strong>Não Aplicável:</strong> ${totalNaoAplicavel}</div>
+                    <div><strong>Total Base Cálculo:</strong> R$ ${totalBaseCalculo.toFixed(2)}</div>
+                    <div><strong>Total DIFAL:</strong> R$ ${totalValor.toFixed(2)}</div>
+                    <div><strong>Total FCP:</strong> R$ ${totalFCP.toFixed(2)}</div>
+                    <div><strong>Total Geral:</strong> R$ ${(totalValor + totalFCP).toFixed(2)}</div>
                 </div>
             `;
         }
 
-        function calcularTodos() {
+        function processarTodosXMLs() {
             if (todosCalculos.length === 0) {
-                alert('Não há cálculos para processar. Importe alguns XMLs primeiro.');
+                alert('Não há XMLs para processar. Importe alguns XMLs primeiro.');
                 return;
             }
             
-            alert(`Recálculo concluído! ${todosCalculos.length} NF-es processadas.`);
+            alert(`Processamento concluído! ${todosCalculos.length} NF-es processadas.`);
         }
 
         function exportarExcel() {
@@ -702,14 +875,18 @@
                 'UF Destino': calculo.destino,
                 'Tipo Destinatário': calculo.tipoDestinatario,
                 'Base Cálculo (R$)': calculo.baseCalculo?.toFixed(2) || '0.00',
-                'Alíquota Interestadual (%)': calculo.aliqInterestadual || '0.00',
-                'Alíquota Interna (%)': calculo.aliqInterna || '0.00',
+                'Valor Total NF (R$)': calculo.valorTotal?.toFixed(2) || '0.00',
+                'Alíquota Interestadual (%)': calculo.aliqInterestadual?.toFixed(2) || '0.00',
+                'Alíquota Interna (%)': calculo.aliqInterna?.toFixed(2) || '0.00',
+                'Diferencial Alíquota (%)': calculo.aliqInterna && calculo.aliqInterestadual ? 
+                    (calculo.aliqInterna - calculo.aliqInterestadual).toFixed(2) : '0.00',
                 'FCP (%)': calculo.percFCP || '0.00',
                 'Valor DIFAL (R$)': calculo.difal?.toFixed(2) || '0.00',
                 'Valor FCP (R$)': calculo.fcp?.toFixed(2) || '0.00',
                 'Total a Recolher (R$)': calculo.total?.toFixed(2) || '0.00',
-                'Status': calculo.aplicavel ? (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 'Não Aplicável',
-                'Motivo': calculo.motivo || ''
+                'Status': calculo.status === 'Erro' ? 'Erro' : 
+                         calculo.aplicavel ? (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 'Não Aplicável',
+                'Motivo': calculo.motivo || calculo.status === 'Erro' ? 'Erro no processamento' : ''
             }));
             
             const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
@@ -729,11 +906,76 @@
         function limparTudo() {
             if (confirm('Tem certeza que deseja limpar todos os cálculos?')) {
                 todosCalculos = [];
+                debugData = [];
                 atualizarTabela();
                 atualizarResumo();
-                document.getElementById('resultado').style.display = 'none';
-                document.getElementById('isencao').style.display = 'none';
+                document.getElementById('debugInfo').style.display = 'none';
+                document.getElementById('resultadoManual').innerHTML = '';
             }
+        }
+
+        function mostrarDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            
+            debugContent.innerHTML = JSON.stringify(debugData, null, 2);
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function calcularManual() {
+            const ufOrigem = document.getElementById('ufOrigem').value;
+            const ufDestino = document.getElementById('ufDestino').value;
+            const valorBase = parseFloat(document.getElementById('valorBase').value);
+
+            if (!ufOrigem || !ufDestino || !valorBase || valorBase <= 0) {
+                alert('Por favor, preencha todos os campos com valores válidos.');
+                return;
+            }
+
+            const resultado = calcularDIFALDetalhado(ufOrigem, ufDestino, 'consumidor', valorBase);
+            exibirResultadoManual(resultado);
+        }
+
+        function exibirResultadoManual(resultado) {
+            const resultadoDiv = document.getElementById('resultadoManual');
+            
+            let html = '<div style="background: #d4edda; padding: 15px; border-radius: 8px; border: 2px solid #28a745;">';
+            
+            if (!resultado.aplicavel) {
+                html = '<div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #ffc107;">';
+                html += `<h4>⚠️ DIFAL Não Aplicável</h4>`;
+                html += `<p><strong>Motivo:</strong> ${resultado.motivo}</p>`;
+            } else {
+                html += `<h4>✅ Resultado do Cálculo DIFAL</h4>`;
+                
+                resultado.detalhes.forEach(detalhe => {
+                    html += `
+                        <div class="detalhes-item">
+                            <span>${detalhe.descricao}:</span>
+                            <span>
+                                ${typeof detalhe.valor === 'number' ? 
+                                  (detalhe.descricao.includes('Alíquota') || detalhe.descricao.includes('Fundo') ? 
+                                   `${detalhe.valor}%` : `R$ ${detalhe.valor.toFixed(2)}`) : 
+                                  detalhe.valor}
+                                ${detalhe.formula ? `<br><small style="color: #666;">${detalhe.formula}</small>` : ''}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="detalhes-total">
+                        <span>TOTAL A RECOLHER (DIFAL + FCP):</span>
+                        <span>R$ ${resultado.total.toFixed(2)}</span>
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background: #c3e6cb; border-radius: 5px;">
+                        <small>💡 Recolhimento via GNRE para o estado de ${resultado.destino}</small>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            resultadoDiv.innerHTML = html;
         }
     </script>
 </body>
