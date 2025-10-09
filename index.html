@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora DIFAL - Alíquotas Atualizadas 2024</title>
+    <title>Calculadora DIFAL - Multi Tipos de Cálculo 2025</title>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -365,6 +365,40 @@
             text-align: center;
         }
 
+        /* NOVOS ESTILOS PARA TIPOS DE CÁLCULO */
+        .tipo-calculo-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        
+        .tipo-basico { background: #28a745; color: white; }
+        .tipo-por-dentro { background: #17a2b8; color: white; }
+        .tipo-fcp { background: #e74c3c; color: white; }
+        .tipo-importado { background: #6f42c1; color: white; }
+        .tipo-st { background: #fd7e14; color: white; }
+        .tipo-simples { background: #20c997; color: white; }
+        .tipo-beneficio { background: #ffc107; color: black; }
+        
+        .recomendacao-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .detalhes-tipo-calculo {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -403,8 +437,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🧮 Calculadora DIFAL - Alíquotas Atualizadas 2024</h1>
-            <p>Processamento preciso de XMLs com cálculos corretos de DIFAL - Base de dados atualizada</p>
+            <h1>🧮 Calculadora DIFAL - Multi Tipos de Cálculo 2025</h1>
+            <p>Identificação automática do tipo de cálculo DIFAL conforme legislação 2025</p>
         </header>
 
         <div class="tabs">
@@ -549,6 +583,16 @@
                             <option value="Não Aplicável">Não Aplicável</option>
                             <option value="Erro">Erro</option>
                         </select>
+                        <select id="filtroTipoCalculo" onchange="filtrarTabela()">
+                            <option value="">Todos os tipos</option>
+                            <option value="Básico">Básico</option>
+                            <option value="Por Dentro">Por Dentro</option>
+                            <option value="Com FCP">Com FCP</option>
+                            <option value="Importado">Importado</option>
+                            <option value="ST">Subst. Trib.</option>
+                            <option value="Simples">Simples</option>
+                            <option value="Benefício">Benefício</option>
+                        </select>
                     </div>
 
                     <div class="tabela-container">
@@ -563,12 +607,13 @@
                                     <th>Aliq. Interna</th>
                                     <th>DIFAL</th>
                                     <th>FCP</th>
+                                    <th>Tipo Cálculo</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaResultados">
                                 <tr>
-                                    <td colspan="9" style="text-align: center; padding: 20px;">
+                                    <td colspan="10" style="text-align: center; padding: 20px;">
                                         Nenhum resultado disponível
                                     </td>
                                 </tr>
@@ -627,6 +672,59 @@
     </div>
 
     <script>
+        // TIPOS DE CÁLCULO DIFAL
+        const TIPOS_CALCULO = {
+            BASICO: {
+                codigo: 'BASICO',
+                nome: 'Cálculo Básico (Por Fora)',
+                descricao: 'Operações padrão para consumidor final não contribuinte',
+                formula: 'DIFAL = Base × (Alíquota Interna - Alíquota Interestadual)',
+                cor: 'tipo-basico'
+            },
+            POR_DENTRO: {
+                codigo: 'POR_DENTRO',
+                nome: 'Cálculo Por Dentro',
+                descricao: 'Quando o ICMS compõe o preço da mercadoria',
+                formula: 'DIFAL = [Base × (Alíquota Interna - Alíquota Interestadual)] ÷ (1 - Alíquota Interna)',
+                cor: 'tipo-por-dentro'
+            },
+            COM_FCP: {
+                codigo: 'COM_FCP',
+                nome: 'Com FCP',
+                descricao: 'Estados com adicional de Fundo de Combate à Pobreza',
+                formula: 'FCP = Base × Alíquota FCP | Total = DIFAL + FCP',
+                cor: 'tipo-fcp'
+            },
+            IMPORTADO: {
+                codigo: 'IMPORTADO',
+                nome: 'Produtos Importados',
+                descricao: 'Mercadorias importadas do exterior',
+                formula: 'Alíquota Interestadual = 4% (Resolução Senado 13/2012)',
+                cor: 'tipo-importado'
+            },
+            SUBSTITUICAO_TRIBUTARIA: {
+                codigo: 'SUBSTITUICAO_TRIBUTARIA',
+                nome: 'Substituição Tributária',
+                descricao: 'Quando a mercadoria já tem ICMS-ST',
+                formula: 'Regras específicas por estado/produto',
+                cor: 'tipo-st'
+            },
+            SIMPLES_NACIONAL: {
+                codigo: 'SIMPLES_NACIONAL',
+                nome: 'Simples Nacional',
+                descricao: 'Empresas do Simples Nacional',
+                formula: 'Recolhimento via DAS ou separadamente',
+                cor: 'tipo-simples'
+            },
+            BENEFICIO_FISCAL: {
+                codigo: 'BENEFICIO_FISCAL',
+                nome: 'Benefício Fiscal',
+                descricao: 'Redução da base ou alíquota interna',
+                formula: 'Base/Alíquota reduzida conforme convênio',
+                cor: 'tipo-beneficio'
+            }
+        };
+
         // BANCO DE DADOS ATUALIZADO CONFORME PLANILHA
         let aliquotasInternas = {
             'AC': 19, 'AL': 20, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20, 'ES': 17, 
@@ -836,6 +934,313 @@
             return 12; // Demais operações interestaduais
         }
 
+        // FUNÇÕES PARA IDENTIFICAÇÃO DE TIPO DE CÁLCULO
+        function identificarTipoCalculo(xmlDoc, origem, destino, tipoDestinatario, baseCalculo) {
+            const tiposAplicaveis = [];
+            const recomendacao = {
+                tipoPrincipal: null,
+                tiposSecundarios: [],
+                confianca: 0,
+                motivo: ''
+            };
+
+            try {
+                // 1. Verificar se é produto importado
+                if (ehProdutoImportado(xmlDoc)) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.IMPORTADO);
+                    recomendacao.confianca += 30;
+                }
+
+                // 2. Verificar FCP
+                if (fundoPobreza[destino] > 0) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.COM_FCP);
+                    recomendacao.confianca += 20;
+                }
+
+                // 3. Verificar Substituição Tributária
+                if (temSubstituicaoTributaria(xmlDoc)) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.SUBSTITUICAO_TRIBUTARIA);
+                    recomendacao.confianca += 25;
+                }
+
+                // 4. Verificar Benefício Fiscal
+                if (temBeneficioFiscal(xmlDoc, destino)) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.BENEFICIO_FISCAL);
+                    recomendacao.confianca += 15;
+                }
+
+                // 5. Verificar Simples Nacional
+                if (ehEmitenteSimplesNacional(xmlDoc)) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.SIMPLES_NACIONAL);
+                    recomendacao.confianca += 20;
+                }
+
+                // 6. Verificar se precisa cálculo por dentro
+                if (precisaCalculoPorDentro(xmlDoc, destino)) {
+                    tiposAplicaveis.push(TIPOS_CALCULO.POR_DENTRO);
+                    recomendacao.confianca += 25;
+                }
+
+                // 7. Cálculo básico sempre disponível
+                tiposAplicaveis.push(TIPOS_CALCULO.BASICO);
+                recomendacao.confianca += 10;
+
+                // Determinar tipo principal
+                if (tiposAplicaveis.includes(TIPOS_CALCULO.IMPORTADO)) {
+                    recomendacao.tipoPrincipal = TIPOS_CALCULO.IMPORTADO;
+                } else if (tiposAplicaveis.includes(TIPOS_CALCULO.SUBSTITUICAO_TRIBUTARIA)) {
+                    recomendacao.tipoPrincipal = TIPOS_CALCULO.SUBSTITUICAO_TRIBUTARIA;
+                } else if (tiposAplicaveis.includes(TIPOS_CALCULO.POR_DENTRO)) {
+                    recomendacao.tipoPrincipal = TIPOS_CALCULO.POR_DENTRO;
+                } else if (tiposAplicaveis.includes(TIPOS_CALCULO.COM_FCP)) {
+                    recomendacao.tipoPrincipal = TIPOS_CALCULO.COM_FCP;
+                } else {
+                    recomendacao.tipoPrincipal = TIPOS_CALCULO.BASICO;
+                }
+
+                // Tipos secundários (excluindo o principal)
+                recomendacao.tiposSecundarios = tiposAplicaveis.filter(tipo => 
+                    tipo.codigo !== recomendacao.tipoPrincipal.codigo
+                );
+
+                recomendacao.motivo = gerarMotivoRecomendacao(recomendacao, xmlDoc, destino);
+
+            } catch (error) {
+                console.error('Erro ao identificar tipo de cálculo:', error);
+                recomendacao.tipoPrincipal = TIPOS_CALCULO.BASICO;
+                recomendacao.motivo = 'Erro na análise. Usando cálculo básico como fallback.';
+            }
+
+            return recomendacao;
+        }
+
+        function ehProdutoImportado(xmlDoc) {
+            try {
+                // Verificar se há informações de importação
+                const di = xmlDoc.getElementsByTagName('DI');
+                const adi = xmlDoc.getElementsByTagName('adi');
+                
+                // Verificar se há indicação de produto importado
+                const origemProduto = xmlDoc.getElementsByTagName('orig');
+                if (origemProduto.length > 0) {
+                    const origem = origemProduto[0].textContent;
+                    if (origem === '1' || origem === '2') return true; // 1=Nacional, 2=Estrangeira
+                }
+                
+                return di.length > 0 || adi.length > 0;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function temSubstituicaoTributaria(xmlDoc) {
+            try {
+                // Verificar se há ICMS-ST
+                const icmsST = xmlDoc.getElementsByTagName('ICMSST');
+                const vBCST = xmlDoc.getElementsByTagName('vBCST');
+                const vICMSST = xmlDoc.getElementsByTagName('vICMSST');
+                
+                return icmsST.length > 0 || vBCST.length > 0 || vICMSST.length > 0;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function temBeneficioFiscal(xmlDoc, destino) {
+            try {
+                // Verificar se há convênio ou benefício fiscal
+                const infAdProd = xmlDoc.getElementsByTagName('infAdProd');
+                const textoInfAdProd = infAdProd.length > 0 ? infAdProd[0].textContent.toLowerCase() : '';
+                
+                const palavrasChave = [
+                    'convênio', 'convenio', 'benefício', 'beneficio', 'redução', 'reducao',
+                    'isenção', 'isencao', 'suspensão', 'suspensao', 'alíquota zero', 'aliquota zero'
+                ];
+                
+                return palavrasChave.some(palavra => textoInfAdProd.includes(palavra));
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function ehEmitenteSimplesNacional(xmlDoc) {
+            try {
+                const emit = xmlDoc.getElementsByTagName('emit')[0];
+                const crt = emit.getElementsByTagName('CRT')[0]?.textContent;
+                
+                // CRT = 1 (Simples Nacional)
+                return crt === '1';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function precisaCalculoPorDentro(xmlDoc, destino) {
+            try {
+                // Estados que normalmente exigem cálculo por dentro
+                const estadosPorDentro = ['RJ', 'SP', 'MG', 'PR'];
+                
+                // Verificar se o produto tem indicação de ICMS incluso
+                const infAdProd = xmlDoc.getElementsByTagName('infAdProd');
+                const textoInfAdProd = infAdProd.length > 0 ? infAdProd[0].textContent.toLowerCase() : '';
+                
+                const indicadoresPorDentro = [
+                    'icms incluso', 'tributação monofásica', 'preço com icms',
+                    'valor com icms', 'inclui icms'
+                ];
+                
+                return estadosPorDentro.includes(destino) || 
+                       indicadoresPorDentro.some(indicador => textoInfAdProd.includes(indicador));
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function gerarMotivoRecomendacao(recomendacao, xmlDoc, destino) {
+            const motivos = [];
+            
+            if (recomendacao.tipoPrincipal.codigo === 'IMPORTADO') {
+                motivos.push('Produto identificado como importado do exterior');
+            }
+            
+            if (recomendacao.tiposSecundarios.some(t => t.codigo === 'COM_FCP')) {
+                motivos.push(`Estado ${destino} possui FCP de ${fundoPobreza[destino]}%`);
+            }
+            
+            if (recomendacao.tiposSecundarios.some(t => t.codigo === 'SUBSTITUICAO_TRIBUTARIA')) {
+                motivos.push('Nota possui indicação de Substituição Tributária');
+            }
+            
+            if (recomendacao.tiposSecundarios.some(t => t.codigo === 'SIMPLES_NACIONAL')) {
+                motivos.push('Emitente identificado como Simples Nacional');
+            }
+            
+            if (recomendacao.tipoPrincipal.codigo === 'POR_DENTRO') {
+                motivos.push('Características indicam necessidade de cálculo por dentro');
+            }
+            
+            return motivos.length > 0 ? motivos.join(' | ') : 'Cálculo padrão aplicado';
+        }
+
+        // FUNÇÃO DE CÁLCULO MULTI-TIPO
+        function calcularDIFALMultiTipo(origem, destino, tipoDestinatario, baseCalculo, tipoCalculo, xmlDoc = null) {
+            let resultado = {
+                baseCalculo: baseCalculo,
+                aliqInterestadual: calcularAliquotaInterestadual(origem, destino),
+                aliqInterna: aliquotasInternas[destino] || 18,
+                percFCP: fundoPobreza[destino] || 0,
+                tipoCalculo: tipoCalculo,
+                detalhes: []
+            };
+
+            // Ajustar alíquota interestadual para importados
+            if (tipoCalculo.codigo === 'IMPORTADO') {
+                resultado.aliqInterestadual = 4;
+            }
+
+            // Cálculo do DIFAL conforme tipo
+            switch (tipoCalculo.codigo) {
+                case 'BASICO':
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    break;
+                    
+                case 'POR_DENTRO':
+                    const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
+                    resultado.difal = (baseCalculo * diferencial / 100) / (1 - resultado.aliqInterna / 100);
+                    break;
+                    
+                case 'COM_FCP':
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    break;
+                    
+                case 'IMPORTADO':
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
+                    break;
+                    
+                case 'SUBSTITUICAO_TRIBUTARIA':
+                    // Cálculo simplificado - na prática varia por estado/produto
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
+                    break;
+                    
+                case 'SIMPLES_NACIONAL':
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    resultado.observacao = 'Verificar necessidade de recolhimento separado do DAS';
+                    break;
+                    
+                case 'BENEFICIO_FISCAL':
+                    // Aplicar redução conforme benefício (simplificado)
+                    const baseReduzida = baseCalculo * 0.7; // Exemplo: 30% de redução
+                    resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    resultado.baseCalculoOriginal = baseCalculo;
+                    resultado.baseCalculoReduzida = baseReduzida;
+                    break;
+                    
+                default:
+                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+            }
+
+            // Calcular FCP se aplicável
+            resultado.fcp = baseCalculo * resultado.percFCP / 100;
+            resultado.total = resultado.difal + resultado.fcp;
+
+            // Gerar detalhes do cálculo
+            resultado.detalhes = gerarDetalhesCalculo(resultado, tipoCalculo);
+
+            return resultado;
+        }
+
+        function gerarDetalhesCalculo(resultado, tipoCalculo) {
+            const detalhes = [
+                { descricao: 'Base de Cálculo', valor: resultado.baseCalculo, formula: 'Valor da operação' },
+                { descricao: 'Alíquota Interestadual', valor: resultado.aliqInterestadual, formula: `${resultado.aliqInterestadual}%` },
+                { descricao: 'Alíquota Interna Destino', valor: resultado.aliqInterna, formula: `${resultado.aliqInterna}%` }
+            ];
+
+            // Adicionar detalhes específicos por tipo
+            switch (tipoCalculo.codigo) {
+                case 'POR_DENTRO':
+                    detalhes.push(
+                        { descricao: 'Tipo Cálculo', valor: 'Por Dentro', formula: 'ICMS incluso no preço' },
+                        { descricao: 'Fórmula Aplicada', valor: tipoCalculo.formula, formula: '' }
+                    );
+                    break;
+                    
+                case 'IMPORTADO':
+                    detalhes.push(
+                        { descricao: 'Tipo Cálculo', valor: 'Produto Importado', formula: 'Alíquota interestadual 4%' },
+                        { descricao: 'Regulamentação', valor: 'Resolução Senado 13/2012', formula: '' }
+                    );
+                    break;
+                    
+                case 'BENEFICIO_FISCAL':
+                    detalhes.push(
+                        { descricao: 'Base Original', valor: resultado.baseCalculoOriginal, formula: 'Antes do benefício' },
+                        { descricao: 'Base com Redução', valor: resultado.baseCalculoReduzida, formula: '70% da base original' },
+                        { descricao: 'Tipo Cálculo', valor: 'Com Benefício Fiscal', formula: 'Redução de base' }
+                    );
+                    break;
+                    
+                default:
+                    detalhes.push(
+                        { descricao: 'Tipo Cálculo', valor: tipoCalculo.nome, formula: tipoCalculo.formula }
+                    );
+            }
+
+            detalhes.push(
+                { descricao: 'Diferencial de Alíquota', valor: (resultado.aliqInterna - resultado.aliqInterestadual).toFixed(2), formula: `${resultado.aliqInterna}% - ${resultado.aliqInterestadual}%` },
+                { descricao: 'Valor DIFAL', valor: resultado.difal, formula: `Cálculo ${tipoCalculo.nome}` },
+                { descricao: 'Fundo Combate à Pobreza', valor: resultado.percFCP, formula: `${resultado.percFCP}%` },
+                { descricao: 'Valor FCP', valor: resultado.fcp, formula: `R$ ${resultado.baseCalculo.toFixed(2)} × ${resultado.percFCP}%` }
+            );
+
+            if (resultado.observacao) {
+                detalhes.push({ descricao: 'Observação', valor: resultado.observacao, formula: '' });
+            }
+
+            return detalhes;
+        }
+
         function processarXMLReal(xmlContent, fileName) {
             try {
                 const parser = new DOMParser();
@@ -887,6 +1292,11 @@
                 const baseCalculo = sanitizarValor(vProd) + sanitizarValor(vFrete) + sanitizarValor(vSeg) - sanitizarValor(vDesc) + sanitizarValor(vOutro);
                 const valorTotal = sanitizarValor(vNF) || baseCalculo;
 
+                // IDENTIFICAR TIPO DE CÁLCULO
+                const recomendacaoCalculo = identificarTipoCalculo(
+                    xmlDoc, emitUF, destUF, tipoDestinatario, baseCalculo
+                );
+
                 const calculo = {
                     id: Date.now() + Math.random(),
                     fileName: fileName,
@@ -902,20 +1312,34 @@
                     valorTotal: valorTotal,
                     status: 'Processado',
                     timestamp: new Date().toLocaleString(),
-                    detalhes: []
+                    recomendacaoCalculo: recomendacaoCalculo
                 };
 
-                // Calcular DIFAL usando cache
-                const resultado = calcularDIFALComCache(
-                    calculo.origem,
-                    calculo.destino,
-                    calculo.tipoDestinatario,
-                    calculo.baseCalculo
-                );
-
-                Object.assign(calculo, resultado);
-                todosCalculos.push(calculo);
+                // Verificar aplicabilidade primeiro
+                const aplicavel = verificarAplicabilidade(emitUF, destUF, tipoDestinatario);
                 
+                if (!aplicavel.aplicavel) {
+                    calculo.aplicavel = false;
+                    calculo.motivo = aplicavel.motivo;
+                    calculo.difal = 0;
+                    calculo.fcp = 0;
+                    calculo.total = 0;
+                } else {
+                    // CALCULAR COM O TIPO RECOMENDADO
+                    const resultado = calcularDIFALMultiTipo(
+                        calculo.origem,
+                        calculo.destino,
+                        calculo.tipoDestinatario,
+                        calculo.baseCalculo,
+                        recomendacaoCalculo.tipoPrincipal,
+                        xmlDoc
+                    );
+
+                    Object.assign(calculo, resultado);
+                    calculo.aplicavel = true;
+                }
+
+                todosCalculos.push(calculo);
                 atualizarTabela();
                 
             } catch (error) {
@@ -942,73 +1366,6 @@
                 todosCalculos.push(calculoErro);
                 atualizarTabela();
             }
-        }
-
-        function calcularDIFALComCache(origem, destino, tipoDestinatario, baseCalculo) {
-            const chave = `${origem}-${destino}-${tipoDestinatario}-${baseCalculo}`;
-            
-            if (cacheCalculos.has(chave)) {
-                return cacheCalculos.get(chave);
-            }
-            
-            const resultado = calcularDIFALDetalhado(origem, destino, tipoDestinatario, baseCalculo);
-            cacheCalculos.set(chave, resultado);
-            
-            return resultado;
-        }
-
-        function calcularDIFALDetalhado(origem, destino, tipoDestinatario, baseCalculo) {
-            // Verificar aplicabilidade primeiro
-            const aplicavel = verificarAplicabilidade(origem, destino, tipoDestinatario);
-            
-            if (!aplicavel.aplicavel) {
-                return {
-                    aplicavel: false,
-                    motivo: aplicavel.motivo,
-                    difal: 0,
-                    fcp: 0,
-                    total: 0,
-                    aliqInterestadual: 0,
-                    aliqInterna: 0,
-                    percFCP: 0,
-                    detalhes: []
-                };
-            }
-            
-            // Obter alíquotas atualizadas
-            const aliqInterestadual = calcularAliquotaInterestadual(origem, destino);
-            const aliqInterna = aliquotasInternas[destino] || 18;
-            const percFCP = fundoPobreza[destino] || 0;
-            
-            // Cálculo correto do DIFAL conforme legislação
-            const difal = baseCalculo * (aliqInterna - aliqInterestadual) / 100;
-            const fcp = baseCalculo * percFCP / 100;
-            const total = difal + fcp;
-            
-            const detalhes = [
-                { descricao: 'Base de Cálculo', valor: baseCalculo, formula: 'Valor Produtos + Frete + Seguro - Desconto + Outros' },
-                { descricao: 'Alíquota Interestadual', valor: aliqInterestadual, formula: `${origem} → ${destino}` },
-                { descricao: 'Alíquota Interna Destino', valor: aliqInterna, formula: `UF ${destino}` },
-                { descricao: 'Diferencial de Alíquota', valor: (aliqInterna - aliqInterestadual).toFixed(2), formula: `${aliqInterna}% - ${aliqInterestadual}%` },
-                { descricao: 'Cálculo DIFAL', valor: difal, formula: `R$ ${baseCalculo.toFixed(2)} × ${(aliqInterna - aliqInterestadual).toFixed(2)}%` },
-                { descricao: 'Fundo Combate à Pobreza', valor: percFCP, formula: `${percFCP}%` },
-                { descricao: 'Valor FCP', valor: fcp, formula: `R$ ${baseCalculo.toFixed(2)} × ${percFCP}%` }
-            ];
-            
-            return {
-                aplicavel: true,
-                origem,
-                destino,
-                baseCalculo,
-                aliqInterestadual,
-                aliqInterna,
-                percFCP,
-                difal,
-                fcp,
-                total,
-                detalhes,
-                motivo: ''
-            };
         }
 
         function verificarAplicabilidade(origem, destino, tipoDestinatario) {
@@ -1057,17 +1414,20 @@
         function filtrarTabela() {
             const filtroTexto = document.getElementById('filtroTabela').value.toLowerCase();
             const filtroStatus = document.getElementById('filtroStatus').value;
+            const filtroTipoCalculo = document.getElementById('filtroTipoCalculo').value;
             
             const linhas = document.querySelectorAll('#tabelaResultados tr');
             
             linhas.forEach(linha => {
                 const textoLinha = linha.textContent.toLowerCase();
                 const statusLinha = linha.querySelector('.status-applicable, .status-not-applicable, .status-exempt')?.textContent || '';
+                const tipoCalculoLinha = linha.cells[8]?.textContent || '';
                 
                 const correspondeTexto = textoLinha.includes(filtroTexto);
                 const correspondeStatus = !filtroStatus || statusLinha.includes(filtroStatus);
+                const correspondeTipo = !filtroTipoCalculo || tipoCalculoLinha.includes(filtroTipoCalculo);
                 
-                linha.style.display = (correspondeTexto && correspondeStatus) ? '' : 'none';
+                linha.style.display = (correspondeTexto && correspondeStatus && correspondeTipo) ? '' : 'none';
             });
         }
 
@@ -1081,7 +1441,7 @@
             if (todosCalculos.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 20px;">
+                        <td colspan="10" style="text-align: center; padding: 20px;">
                             Nenhum resultado disponível
                         </td>
                     </tr>
@@ -1101,6 +1461,13 @@
                     calculo.aplicavel ? 
                     (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 
                     'Não Aplicável';
+
+                const tipoCalculoHTML = calculo.recomendacaoCalculo ? 
+                    `<span class="tipo-calculo-badge ${calculo.recomendacaoCalculo.tipoPrincipal.cor}" 
+                          title="${calculo.recomendacaoCalculo.tipoPrincipal.descricao}">
+                        ${calculo.recomendacaoCalculo.tipoPrincipal.nome.split(' ')[0]}
+                    </span>` : 
+                    '<span>N/A</span>';
                 
                 tr.innerHTML = `
                     <td title="${calculo.fileName}">${calculo.fileName.length > 20 ? calculo.fileName.substring(0, 20) + '...' : calculo.fileName}</td>
@@ -1111,6 +1478,7 @@
                     <td>${calculo.aliqInterna?.toFixed(2) || '0.00'}%</td>
                     <td>R$ ${calculo.difal?.toFixed(2) || '0.00'}</td>
                     <td>R$ ${calculo.fcp?.toFixed(2) || '0.00'}</td>
+                    <td>${tipoCalculoHTML}</td>
                     <td><span class="${statusClass}">${statusText}</span></td>
                 `;
                 
@@ -1140,7 +1508,30 @@
                 </div>
             `;
             
-            if (calculo.aplicavel && calculo.detalhes.length > 0) {
+            // ADICIONAR RECOMENDAÇÃO DE TIPO DE CÁLCULO
+            if (calculo.recomendacaoCalculo) {
+                const rec = calculo.recomendacaoCalculo;
+                html += `
+                    <div class="recomendacao-box">
+                        <h4>🎯 Recomendação de Tipo de Cálculo</h4>
+                        <div style="margin: 10px 0;">
+                            <span class="tipo-calculo-badge ${rec.tipoPrincipal.cor}">
+                                ${rec.tipoPrincipal.nome}
+                            </span>
+                            <strong> (Confiança: ${rec.confianca}%)</strong>
+                        </div>
+                        <div><strong>Motivo:</strong> ${rec.motivo}</div>
+                        <div style="margin-top: 10px;">
+                            <strong>Outros tipos identificados:</strong>
+                            ${rec.tiposSecundarios.map(tipo => 
+                                `<span class="tipo-calculo-badge ${tipo.cor}" title="${tipo.descricao}">${tipo.nome}</span>`
+                            ).join(' ')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (calculo.aplicavel && calculo.detalhes && calculo.detalhes.length > 0) {
                 html += '<div class="resultado" style="display: block; background: #d4edda; padding: 15px; border-radius: 8px; margin-top: 10px;">';
                 html += '<h4>Detalhamento do Cálculo</h4>';
                 
@@ -1185,6 +1576,14 @@
             const totalFCP = todosCalculos.reduce((sum, c) => sum + (c.fcp || 0), 0);
             const totalBaseCalculo = todosCalculos.reduce((sum, c) => sum + (c.baseCalculo || 0), 0);
             
+            // Estatísticas por tipo de cálculo
+            const tiposCalculoCount = {};
+            Object.values(TIPOS_CALCULO).forEach(tipo => {
+                tiposCalculoCount[tipo.codigo] = todosCalculos.filter(c => 
+                    c.recomendacaoCalculo && c.recomendacaoCalculo.tipoPrincipal.codigo === tipo.codigo
+                ).length;
+            });
+            
             resumoDiv.innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px;">
                     <div><strong>Total NF-es:</strong> ${totalNFes}</div>
@@ -1198,9 +1597,16 @@
                     <div><strong>Total FCP:</strong> R$ ${totalFCP.toFixed(2)}</div>
                     <div><strong>Total Geral:</strong> R$ ${(totalValor + totalFCP).toFixed(2)}</div>
                 </div>
+                <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>Tipos de Cálculo:</strong>
+                    ${Object.entries(tiposCalculoCount).map(([tipo, count]) => 
+                        count > 0 ? `<span class="tipo-calculo-badge ${TIPOS_CALCULO[tipo].cor}">${TIPOS_CALCULO[tipo].nome.split(' ')[0]}: ${count}</span>` : ''
+                    ).join(' ')}
+                </div>
             `;
         }
 
+        // FUNÇÃO CORRIGIDA - processarTodosXMLs
         function processarTodosXMLs() {
             if (todosCalculos.length === 0) {
                 alert('Não há XMLs para processar. Importe alguns XMLs primeiro.');
@@ -1212,12 +1618,13 @@
             setTimeout(() => {
                 let processados = 0;
                 todosCalculos.forEach((calculo, index) => {
-                    if (calculo.status !== 'Erro' && calculo.aplicavel) {
-                        const resultado = calcularDIFALComCache(
+                    if (calculo.status !== 'Erro' && calculo.aplicavel && calculo.recomendacaoCalculo) {
+                        const resultado = calcularDIFALMultiTipo(
                             calculo.origem,
                             calculo.destino,
                             calculo.tipoDestinatario,
-                            calculo.baseCalculo
+                            calculo.baseCalculo,
+                            calculo.recomendacaoCalculo.tipoPrincipal
                         );
                         Object.assign(calculo, resultado);
                     }
@@ -1249,6 +1656,7 @@
                 'UF Origem': calculo.origem,
                 'UF Destino': calculo.destino,
                 'Tipo Destinatário': calculo.tipoDestinatario,
+                'Tipo Cálculo': calculo.recomendacaoCalculo ? calculo.recomendacaoCalculo.tipoPrincipal.nome : 'N/A',
                 'Base Cálculo (R$)': calculo.baseCalculo?.toFixed(2) || '0.00',
                 'Valor Total NF (R$)': calculo.valorTotal?.toFixed(2) || '0.00',
                 'Alíquota Interestadual (%)': calculo.aliqInterestadual?.toFixed(2) || '0.00',
@@ -1261,7 +1669,8 @@
                 'Total a Recolher (R$)': calculo.total?.toFixed(2) || '0.00',
                 'Status': calculo.status === 'Erro' ? 'Erro' : 
                          calculo.aplicavel ? (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 'Não Aplicável',
-                'Motivo': calculo.motivo || calculo.status === 'Erro' ? 'Erro no processamento' : ''
+                'Motivo': calculo.motivo || calculo.status === 'Erro' ? 'Erro no processamento' : '',
+                'Confiança Recomendação (%)': calculo.recomendacaoCalculo ? calculo.recomendacaoCalculo.confianca : 'N/A'
             }));
             
             const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
@@ -1288,7 +1697,7 @@
                 aliquotasInternas: aliquotasInternas,
                 fundoPobreza: fundoPobreza,
                 timestamp: new Date().toISOString(),
-                versao: '3.0',
+                versao: '4.0',
                 totalRegistros: todosCalculos.length
             };
             
@@ -1324,7 +1733,9 @@
                 return;
             }
 
-            const resultado = calcularDIFALComCache(ufOrigem, ufDestino, 'consumidor', valorBase);
+            // Para cálculo manual, usar tipo básico por padrão
+            const tipoCalculo = TIPOS_CALCULO.BASICO;
+            const resultado = calcularDIFALMultiTipo(ufOrigem, ufDestino, 'consumidor', valorBase, tipoCalculo);
             exibirResultadoManual(resultado);
         }
 
@@ -1340,6 +1751,7 @@
             } else {
                 html += `<h4>✅ Resultado do Cálculo DIFAL</h4>`;
                 html += `<p><strong>Origem:</strong> ${resultado.origem} → <strong>Destino:</strong> ${resultado.destino}</p>`;
+                html += `<p><strong>Tipo de Cálculo:</strong> <span class="tipo-calculo-badge ${resultado.tipoCalculo.cor}">${resultado.tipoCalculo.nome}</span></p>`;
                 
                 resultado.detalhes.forEach(detalhe => {
                     html += `
