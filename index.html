@@ -399,6 +399,98 @@
             border: 1px solid #dee2e6;
         }
 
+        /* NOVOS ESTILOS ADICIONADOS */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .status-pendente {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .status-agendado {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+
+        .status-pago {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .gestao-pagamento {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .selecao-tipo-calculo {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #2196f3;
+        }
+
+        .comparacao-tipos {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modo-escuro {
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        .modo-escuro .section {
+            background: #34495e;
+            color: #ecf0f1;
+        }
+
+        .grafico-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -432,6 +524,13 @@
                 font-size: 14px;
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -444,6 +543,7 @@
         <div class="tabs">
             <button class="tab active" onclick="abrirTab('tabCalculadora')">Calculadora</button>
             <button class="tab" onclick="abrirTab('tabAdmin')">Administrar Alíquotas</button>
+            <button class="tab" onclick="abrirTab('tabGestao')">Gestão de Pagamentos</button>
         </div>
 
         <div id="tabCalculadora" class="tab-content active">
@@ -452,6 +552,7 @@
                 <button class="btn btn-success" onclick="exportarExcel()">Exportar para Excel</button>
                 <button class="btn btn-info" onclick="fazerBackup()">Fazer Backup</button>
                 <button class="btn btn-warning" onclick="limparTudo()">Limpar Tudo</button>
+                <button class="btn btn-secondary" onclick="alternarModoEscuro()">Modo Escuro</button>
             </div>
 
             <div class="progresso-container" id="progressoContainer">
@@ -486,6 +587,12 @@
                             </label>
                             <label>
                                 <input type="checkbox" id="manterHistorico" checked> Manter histórico
+                            </label>
+                            <label>
+                                <input type="checkbox" id="usarWebWorker"> Usar processamento em background
+                            </label>
+                            <label>
+                                <input type="checkbox" id="modoEscuro"> Modo escuro permanente
                             </label>
                         </div>
                     </div>
@@ -565,6 +672,19 @@
                             <input type="text" id="valorBase" placeholder="0,00" oninput="formatarMoeda(this)">
                         </div>
 
+                        <div class="form-group">
+                            <label for="tipoCalculoManual">Tipo de Cálculo:</label>
+                            <select id="tipoCalculoManual">
+                                <option value="BASICO">Básico (Por Fora)</option>
+                                <option value="POR_DENTRO">Por Dentro</option>
+                                <option value="COM_FCP">Com FCP</option>
+                                <option value="IMPORTADO">Importado</option>
+                                <option value="SUBSTITUICAO_TRIBUTARIA">Subst. Tributária</option>
+                                <option value="SIMPLES_NACIONAL">Simples Nacional</option>
+                                <option value="BENEFICIO_FISCAL">Benefício Fiscal</option>
+                            </select>
+                        </div>
+
                         <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">Calcular DIFAL Manual</button>
 
                         <div id="resultadoManual" style="margin-top: 15px;"></div>
@@ -582,6 +702,9 @@
                             <option value="Isento">Isento</option>
                             <option value="Não Aplicável">Não Aplicável</option>
                             <option value="Erro">Erro</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Agendado">Agendado</option>
+                            <option value="Pago">Pago</option>
                         </select>
                         <select id="filtroTipoCalculo" onchange="filtrarTabela()">
                             <option value="">Todos os tipos</option>
@@ -608,12 +731,13 @@
                                     <th>DIFAL</th>
                                     <th>FCP</th>
                                     <th>Tipo Cálculo</th>
-                                    <th>Status</th>
+                                    <th>Status Pag.</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaResultados">
                                 <tr>
-                                    <td colspan="10" style="text-align: center; padding: 20px;">
+                                    <td colspan="11" style="text-align: center; padding: 20px;">
                                         Nenhum resultado disponível
                                     </td>
                                 </tr>
@@ -648,7 +772,8 @@
                             <th>Estado</th>
                             <th>Alíquota Interna (%)</th>
                             <th>FCP (%)</th>
-                            <th>Última Atualização</th>
+                            <th>Vigência</th>
+                            <th>Fonte</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaAdmin">
@@ -669,9 +794,118 @@
                 </div>
             </div>
         </div>
+
+        <div id="tabGestao" class="tab-content">
+            <div class="admin-section">
+                <h2>📅 Gestão de Pagamentos</h2>
+                <p>Controle o status de pagamento das NF-es e agende para meses futuros.</p>
+                
+                <div class="controls">
+                    <button class="btn btn-success" onclick="marcarComoPago()">Marcar como Pago</button>
+                    <button class="btn btn-warning" onclick="agendarParaMesSeguinte()">Agendar Próximo Mês</button>
+                    <button class="btn btn-info" onclick="gerarRelatorioPagamentos()">Relatório de Pagamentos</button>
+                    <button class="btn btn-primary" onclick="exportarGNRE()">Exportar para GNRE</button>
+                </div>
+
+                <div class="gestao-pagamento">
+                    <h4>Resumo de Pagamentos</h4>
+                    <div id="resumoPagamentos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                        <!-- Preenchido via JavaScript -->
+                    </div>
+                </div>
+
+                <div class="filtros">
+                    <input type="text" id="filtroGestao" placeholder="Filtrar por NF-e, status..." oninput="filtrarTabelaGestao()">
+                    <select id="filtroMes" onchange="filtrarTabelaGestao()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option>
+                        <option value="02">Fevereiro</option>
+                        <option value="03">Março</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Maio</option>
+                        <option value="06">Junho</option>
+                        <option value="07">Julho</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                    <select id="filtroAno" onchange="filtrarTabelaGestao()">
+                        <option value="">Todos os anos</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+
+                <table class="tabela-admin">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll" onchange="selecionarTodos()"></th>
+                            <th>NF-e</th>
+                            <th>Destino</th>
+                            <th>Valor DIFAL</th>
+                            <th>Valor FCP</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Mês/Ano Ref.</th>
+                            <th>Vencimento</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaGestao">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+
+                <div class="grafico-container">
+                    <h4>📊 Distribuição de Pagamentos por Mês</h4>
+                    <div id="graficoPagamentos" style="height: 200px; background: #f8f9fa; border-radius: 5px; padding: 10px;">
+                        <!-- Gráfico será renderizado aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Web Worker para processamento em background
+        const xmlWorker = new Worker(URL.createObjectURL(new Blob([`
+            self.onmessage = function(e) {
+                const { xmlContent, fileName } = e.data;
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+                    
+                    if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                        throw new Error("XML inválido ou mal formado");
+                    }
+
+                    // Extrair dados do XML (código simplificado para o worker)
+                    const emit = xmlDoc.getElementsByTagName("emit")[0];
+                    const dest = xmlDoc.getElementsByTagName("dest")[0];
+                    const total = xmlDoc.getElementsByTagName("total")[0];
+                    const ICMSTot = total ? total.getElementsByTagName("ICMSTot")[0] : null;
+                    
+                    const emitUF = emit.getElementsByTagName("UF")[0]?.textContent;
+                    const destUF = dest.getElementsByTagName("UF")[0]?.textContent;
+                    const vNF = ICMSTot ? ICMSTot.getElementsByTagName("vNF")[0]?.textContent : "0";
+                    
+                    self.postMessage({
+                        success: true,
+                        data: { emitUF, destUF, vNF, fileName }
+                    });
+                } catch (error) {
+                    self.postMessage({
+                        success: false,
+                        error: error.message,
+                        fileName: fileName
+                    });
+                }
+            };
+        `], { type: 'text/javascript' })));
+
         // TIPOS DE CÁLCULO DIFAL
         const TIPOS_CALCULO = {
             BASICO: {
@@ -725,12 +959,35 @@
             }
         };
 
-        // BANCO DE DADOS ATUALIZADO CONFORME PLANILHA
+        // BANCO DE DADOS ATUALIZADO COM VIGÊNCIA
         let aliquotasInternas = {
-            'AC': 19, 'AL': 20, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20, 'ES': 17, 
-            'GO': 19, 'MA': 23, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 19, 'PB': 20, 'PR': 19.5, 
-            'PE': 20.5, 'PI': 22.5, 'RJ': 22, 'RN': 20, 'RS': 17, 'RO': 19.5, 'RR': 20, 'SC': 17, 
-            'SP': 18, 'SE': 20, 'TO': 20
+            'AC': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'AL': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'AP': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'AM': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'BA': { valor: 20.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'CE': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'DF': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'ES': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'GO': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'MA': { valor: 23, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'MT': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'MS': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'MG': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'PA': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'PB': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'PR': { valor: 19.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'PE': { valor: 20.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'PI': { valor: 22.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'RJ': { valor: 22, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'RN': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'RS': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'RO': { valor: 19.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'RR': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'SC': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'SP': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'SE': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+            'TO': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' }
         };
 
         let fundoPobreza = {
@@ -746,33 +1003,52 @@
         let configUsuario = {
             autoProcessar: true,
             manterHistorico: true,
+            usarWebWorker: false,
+            modoEscuro: false,
             formatoMoeda: 'BRL',
             casasDecimais: 2
         };
 
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            configurarUpload();
-            carregarConfiguracoes();
-            carregarHistorico();
-            carregarAliquotasSalvas();
-            renderizarTabelaAdmin();
-        });
+        // Sistema de cache melhorado
+        const cacheManager = {
+            get: (chave) => {
+                try {
+                    const item = localStorage.getItem(`cache_${chave}`);
+                    if (!item) return null;
+                    
+                    const { valor, expiracao } = JSON.parse(item);
+                    if (Date.now() > expiracao) {
+                        localStorage.removeItem(`cache_${chave}`);
+                        return null;
+                    }
+                    return valor;
+                } catch {
+                    return null;
+                }
+            },
+            
+            set: (chave, valor, expiracaoMinutos = 60) => {
+                try {
+                    const item = {
+                        valor: valor,
+                        expiracao: Date.now() + (expiracaoMinutos * 60 * 1000)
+                    };
+                    localStorage.setItem(`cache_${chave}`, JSON.stringify(item));
+                } catch (error) {
+                    console.warn('Erro ao salvar cache:', error);
+                }
+            },
+            
+            clear: () => {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('cache_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+        };
 
-        function abrirTab(tabName) {
-            // Esconder todas as tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Mostrar tab selecionada
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
+        // FUNÇÕES QUE ESTAVAM FALTANDO DA VERSÃO ANTERIOR
         function configurarUpload() {
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('xmlUpload');
@@ -806,6 +1082,16 @@
             // Configurar eventos de configuração
             document.getElementById('autoProcessar').addEventListener('change', salvarConfiguracoes);
             document.getElementById('manterHistorico').addEventListener('change', salvarConfiguracoes);
+            document.getElementById('usarWebWorker').addEventListener('change', salvarConfiguracoes);
+            document.getElementById('modoEscuro').addEventListener('change', salvarConfiguracoes);
+        }
+
+        function salvarConfiguracoes() {
+            configUsuario.autoProcessar = document.getElementById('autoProcessar').checked;
+            configUsuario.manterHistorico = document.getElementById('manterHistorico').checked;
+            configUsuario.usarWebWorker = document.getElementById('usarWebWorker').checked;
+            configUsuario.modoEscuro = document.getElementById('modoEscuro').checked;
+            localStorage.setItem('configDIFAL', JSON.stringify(configUsuario));
         }
 
         function carregarConfiguracoes() {
@@ -814,13 +1100,13 @@
                 configUsuario = { ...configUsuario, ...JSON.parse(configSalva) };
                 document.getElementById('autoProcessar').checked = configUsuario.autoProcessar;
                 document.getElementById('manterHistorico').checked = configUsuario.manterHistorico;
+                document.getElementById('usarWebWorker').checked = configUsuario.usarWebWorker;
+                document.getElementById('modoEscuro').checked = configUsuario.modoEscuro;
+                
+                if (configUsuario.modoEscuro) {
+                    alternarModoEscuro();
+                }
             }
-        }
-
-        function salvarConfiguracoes() {
-            configUsuario.autoProcessar = document.getElementById('autoProcessar').checked;
-            configUsuario.manterHistorico = document.getElementById('manterHistorico').checked;
-            localStorage.setItem('configDIFAL', JSON.stringify(configUsuario));
         }
 
         function carregarAliquotasSalvas() {
@@ -856,31 +1142,6 @@
         function salvarHistorico() {
             if (configUsuario.manterHistorico) {
                 localStorage.setItem('historicoDIFAL', JSON.stringify(todosCalculos));
-            }
-        }
-
-        async function processarArquivos(files) {
-            const xmlFiles = Array.from(files).filter(file => file.name.endsWith('.xml'));
-            
-            if (xmlFiles.length === 0) {
-                alert('Nenhum arquivo XML encontrado.');
-                return;
-            }
-
-            mostrarProgresso(0, xmlFiles.length);
-
-            for (let i = 0; i < xmlFiles.length; i++) {
-                const file = xmlFiles[i];
-                await processarArquivoComRetry(file);
-                mostrarProgresso(i + 1, xmlFiles.length);
-            }
-
-            ocultarProgresso();
-            atualizarResumo();
-            salvarHistorico();
-            
-            if (configUsuario.autoProcessar) {
-                processarTodosXMLs();
             }
         }
 
@@ -934,7 +1195,111 @@
             return 12; // Demais operações interestaduais
         }
 
-        // FUNÇÕES PARA IDENTIFICAÇÃO DE TIPO DE CÁLCULO
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            configurarUpload();
+            carregarConfiguracoes();
+            carregarHistorico();
+            carregarAliquotasSalvas();
+            renderizarTabelaAdmin();
+            atualizarResumoPagamentos();
+            renderizarGraficoPagamentos();
+            inicializarTooltips();
+            
+            // Configurar Web Worker
+            xmlWorker.onmessage = function(e) {
+                const { success, data, error, fileName } = e.data;
+                if (success) {
+                    console.log('XML processado via worker:', fileName);
+                } else {
+                    console.error('Erro no worker:', error);
+                }
+            };
+        });
+
+        function abrirTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            // Atualizar conteúdo específico da tab
+            if (tabName === 'tabGestao') {
+                atualizarResumoPagamentos();
+                renderizarTabelaGestao();
+                renderizarGraficoPagamentos();
+            }
+        }
+
+        // FUNÇÃO MELHORADA: processarArquivos com Web Worker
+        async function processarArquivos(files) {
+            const xmlFiles = Array.from(files).filter(file => file.name.endsWith('.xml'));
+            
+            if (xmlFiles.length === 0) {
+                alert('Nenhum arquivo XML encontrado.');
+                return;
+            }
+
+            mostrarProgresso(0, xmlFiles.length);
+
+            // Aplicar estado de loading
+            document.getElementById('uploadArea').classList.add('loading');
+
+            try {
+                if (configUsuario.usarWebWorker && xmlFiles.length > 5) {
+                    await processarComWebWorker(xmlFiles);
+                } else {
+                    await processarSemWebWorker(xmlFiles);
+                }
+            } catch (error) {
+                console.error('Erro no processamento:', error);
+                alert('Erro ao processar arquivos: ' + error.message);
+            } finally {
+                document.getElementById('uploadArea').classList.remove('loading');
+                ocultarProgresso();
+                atualizarResumo();
+                salvarHistorico();
+                
+                if (configUsuario.autoProcessar) {
+                    processarTodosXMLs();
+                }
+            }
+        }
+
+        async function processarComWebWorker(xmlFiles) {
+            const promises = xmlFiles.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        xmlWorker.postMessage({
+                            xmlContent: e.target.result,
+                            fileName: file.name
+                        });
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+            });
+
+            await Promise.all(promises);
+        }
+
+        async function processarSemWebWorker(xmlFiles) {
+            for (let i = 0; i < xmlFiles.length; i++) {
+                const file = xmlFiles[i];
+                await processarArquivoComRetry(file);
+                mostrarProgresso(i + 1, xmlFiles.length);
+            }
+        }
+
+        // FUNÇÃO MELHORADA: identificarTipoCalculo com mais precisão
         function identificarTipoCalculo(xmlDoc, origem, destino, tipoDestinatario, baseCalculo) {
             const tiposAplicaveis = [];
             const recomendacao = {
@@ -985,7 +1350,7 @@
                 tiposAplicaveis.push(TIPOS_CALCULO.BASICO);
                 recomendacao.confianca += 10;
 
-                // Determinar tipo principal
+                // Determinar tipo principal com base na confiança
                 if (tiposAplicaveis.includes(TIPOS_CALCULO.IMPORTADO)) {
                     recomendacao.tipoPrincipal = TIPOS_CALCULO.IMPORTADO;
                 } else if (tiposAplicaveis.includes(TIPOS_CALCULO.SUBSTITUICAO_TRIBUTARIA)) {
@@ -1003,17 +1368,23 @@
                     tipo.codigo !== recomendacao.tipoPrincipal.codigo
                 );
 
+                // Ajustar confiança baseado na quantidade de indicadores
+                const totalIndicadores = tiposAplicaveis.length;
+                recomendacao.confianca = Math.min(100, recomendacao.confianca + (totalIndicadores * 5));
+
                 recomendacao.motivo = gerarMotivoRecomendacao(recomendacao, xmlDoc, destino);
 
             } catch (error) {
                 console.error('Erro ao identificar tipo de cálculo:', error);
                 recomendacao.tipoPrincipal = TIPOS_CALCULO.BASICO;
+                recomendacao.confianca = 50;
                 recomendacao.motivo = 'Erro na análise. Usando cálculo básico como fallback.';
             }
 
             return recomendacao;
         }
 
+        // FUNÇÕES AUXILIARES PARA IDENTIFICAÇÃO DE TIPO DE CÁLCULO
         function ehProdutoImportado(xmlDoc) {
             try {
                 // Verificar se há informações de importação
@@ -1122,15 +1493,16 @@
             return motivos.length > 0 ? motivos.join(' | ') : 'Cálculo padrão aplicado';
         }
 
-        // FUNÇÃO DE CÁLCULO MULTI-TIPO
+        // FUNÇÃO CORRIGIDA: calcularDIFALMultiTipo com tratamento de erro
         function calcularDIFALMultiTipo(origem, destino, tipoDestinatario, baseCalculo, tipoCalculo, xmlDoc = null) {
             let resultado = {
                 baseCalculo: baseCalculo,
                 aliqInterestadual: calcularAliquotaInterestadual(origem, destino),
-                aliqInterna: aliquotasInternas[destino] || 18,
+                aliqInterna: aliquotasInternas[destino]?.valor || 18,
                 percFCP: fundoPobreza[destino] || 0,
                 tipoCalculo: tipoCalculo,
-                detalhes: []
+                detalhes: [],
+                erro: null
             };
 
             // Ajustar alíquota interestadual para importados
@@ -1138,54 +1510,68 @@
                 resultado.aliqInterestadual = 4;
             }
 
-            // Cálculo do DIFAL conforme tipo
-            switch (tipoCalculo.codigo) {
-                case 'BASICO':
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    break;
-                    
-                case 'POR_DENTRO':
-                    const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
-                    resultado.difal = (baseCalculo * diferencial / 100) / (1 - resultado.aliqInterna / 100);
-                    break;
-                    
-                case 'COM_FCP':
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    break;
-                    
-                case 'IMPORTADO':
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
-                    break;
-                    
-                case 'SUBSTITUICAO_TRIBUTARIA':
-                    // Cálculo simplificado - na prática varia por estado/produto
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
-                    break;
-                    
-                case 'SIMPLES_NACIONAL':
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    resultado.observacao = 'Verificar necessidade de recolhimento separado do DAS';
-                    break;
-                    
-                case 'BENEFICIO_FISCAL':
-                    // Aplicar redução conforme benefício (simplificado)
-                    const baseReduzida = baseCalculo * 0.7; // Exemplo: 30% de redução
-                    resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    resultado.baseCalculoOriginal = baseCalculo;
-                    resultado.baseCalculoReduzida = baseReduzida;
-                    break;
-                    
-                default:
-                    resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+            try {
+                // Cálculo do DIFAL conforme tipo
+                switch (tipoCalculo.codigo) {
+                    case 'BASICO':
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        break;
+                        
+                    case 'POR_DENTRO':
+                        const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
+                        const divisor = (1 - resultado.aliqInterna / 100);
+                        
+                        // Proteção contra divisão por zero
+                        if (Math.abs(divisor) < 0.0001) {
+                            resultado.difal = 0;
+                            resultado.erro = 'Alíquota interna inválida para cálculo por dentro';
+                        } else {
+                            resultado.difal = (baseCalculo * diferencial / 100) / divisor;
+                        }
+                        break;
+                        
+                    case 'COM_FCP':
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        break;
+                        
+                    case 'IMPORTADO':
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
+                        break;
+                        
+                    case 'SUBSTITUICAO_TRIBUTARIA':
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
+                        break;
+                        
+                    case 'SIMPLES_NACIONAL':
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        resultado.observacao = 'Verificar necessidade de recolhimento separado do DAS';
+                        break;
+                        
+                    case 'BENEFICIO_FISCAL':
+                        const baseReduzida = baseCalculo * 0.7; // Exemplo: 30% de redução
+                        resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        resultado.baseCalculoOriginal = baseCalculo;
+                        resultado.baseCalculoReduzida = baseReduzida;
+                        break;
+                        
+                    default:
+                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                }
+
+                // Calcular FCP se aplicável
+                resultado.fcp = baseCalculo * resultado.percFCP / 100;
+                resultado.total = resultado.difal + resultado.fcp;
+
+                // Gerar detalhes do cálculo
+                resultado.detalhes = gerarDetalhesCalculo(resultado, tipoCalculo);
+
+            } catch (error) {
+                resultado.erro = error.message;
+                resultado.difal = 0;
+                resultado.fcp = 0;
+                resultado.total = 0;
             }
-
-            // Calcular FCP se aplicável
-            resultado.fcp = baseCalculo * resultado.percFCP / 100;
-            resultado.total = resultado.difal + resultado.fcp;
-
-            // Gerar detalhes do cálculo
-            resultado.detalhes = gerarDetalhesCalculo(resultado, tipoCalculo);
 
             return resultado;
         }
@@ -1241,6 +1627,7 @@
             return detalhes;
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: processarXMLReal
         function processarXMLReal(xmlContent, fileName) {
             try {
                 const parser = new DOMParser();
@@ -1368,6 +1755,7 @@
             }
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: verificarAplicabilidade
         function verificarAplicabilidade(origem, destino, tipoDestinatario) {
             if (origem === destino) {
                 return { aplicavel: false, motivo: 'Operação interna (mesmo estado)' };
@@ -1379,7 +1767,7 @@
             
             // Verificar se as alíquotas são iguais (não há diferencial)
             const aliqInterestadual = calcularAliquotaInterestadual(origem, destino);
-            const aliqInterna = aliquotasInternas[destino];
+            const aliqInterna = aliquotasInternas[destino]?.valor;
             
             if (aliqInterestadual === aliqInterna) {
                 return { aplicavel: false, motivo: 'Alíquotas iguais - sem diferencial' };
@@ -1388,6 +1776,7 @@
             return { aplicavel: true, motivo: '' };
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: sanitizarValor
         function sanitizarValor(valor) {
             if (typeof valor === 'string') {
                 valor = valor.replace(/[^\d,.-]/g, '');
@@ -1402,6 +1791,7 @@
             return numero;
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: formatarMoeda
         function formatarMoeda(input) {
             let valor = input.value.replace(/\D/g, '');
             valor = (valor / 100).toFixed(2) + '';
@@ -1411,6 +1801,7 @@
             input.value = valor;
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: filtrarTabela
         function filtrarTabela() {
             const filtroTexto = document.getElementById('filtroTabela').value.toLowerCase();
             const filtroStatus = document.getElementById('filtroStatus').value;
@@ -1431,6 +1822,7 @@
             });
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: atualizarTabela
         function atualizarTabela() {
             const tbody = document.getElementById('tabelaResultados');
             const detalhesContainer = document.getElementById('detalhesContainer');
@@ -1441,7 +1833,7 @@
             if (todosCalculos.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" style="text-align: center; padding: 20px;">
+                        <td colspan="11" style="text-align: center; padding: 20px;">
                             Nenhum resultado disponível
                         </td>
                     </tr>
@@ -1468,6 +1860,11 @@
                         ${calculo.recomendacaoCalculo.tipoPrincipal.nome.split(' ')[0]}
                     </span>` : 
                     '<span>N/A</span>';
+
+                const statusPagamento = calculo.statusPagamento || 'Pendente';
+                const statusPagamentoClass = statusPagamento === 'Pago' ? 'status-pago' : 
+                                           statusPagamento === 'Agendado' ? 'status-agendado' : 
+                                           'status-pendente';
                 
                 tr.innerHTML = `
                     <td title="${calculo.fileName}">${calculo.fileName.length > 20 ? calculo.fileName.substring(0, 20) + '...' : calculo.fileName}</td>
@@ -1479,7 +1876,13 @@
                     <td>R$ ${calculo.difal?.toFixed(2) || '0.00'}</td>
                     <td>R$ ${calculo.fcp?.toFixed(2) || '0.00'}</td>
                     <td>${tipoCalculoHTML}</td>
-                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td><span class="${statusPagamentoClass}">${statusPagamento}</span></td>
+                    <td>
+                        <button onclick="mostrarDetalhes(${JSON.stringify(calculo).replace(/"/g, '&quot;')})" 
+                                class="btn btn-info" style="padding: 2px 8px; font-size: 11px;">
+                            Detalhes
+                        </button>
+                    </td>
                 `;
                 
                 if (calculo.status !== 'Erro') {
@@ -1493,76 +1896,7 @@
             filtrarTabela();
         }
 
-        function mostrarDetalhes(calculo) {
-            const detalhesContainer = document.getElementById('detalhesContainer');
-            
-            let html = `
-                <div class="xml-info">
-                    <h3>Detalhes do Cálculo - ${calculo.fileName}</h3>
-                    <div><strong>Origem:</strong> ${calculo.origem}</div>
-                    <div><strong>Destino:</strong> ${calculo.destino}</div>
-                    <div><strong>Tipo Destinatário:</strong> ${calculo.tipoDestinatario}</div>
-                    <div><strong>Status:</strong> ${calculo.aplicavel ? (calculo.difal > 0 ? 'DIFAL Aplicável' : 'Isento') : 'Não Aplicável'}</div>
-                    ${calculo.motivo ? `<div><strong>Motivo:</strong> ${calculo.motivo}</div>` : ''}
-                    <div><strong>Data/Hora:</strong> ${calculo.timestamp}</div>
-                </div>
-            `;
-            
-            // ADICIONAR RECOMENDAÇÃO DE TIPO DE CÁLCULO
-            if (calculo.recomendacaoCalculo) {
-                const rec = calculo.recomendacaoCalculo;
-                html += `
-                    <div class="recomendacao-box">
-                        <h4>🎯 Recomendação de Tipo de Cálculo</h4>
-                        <div style="margin: 10px 0;">
-                            <span class="tipo-calculo-badge ${rec.tipoPrincipal.cor}">
-                                ${rec.tipoPrincipal.nome}
-                            </span>
-                            <strong> (Confiança: ${rec.confianca}%)</strong>
-                        </div>
-                        <div><strong>Motivo:</strong> ${rec.motivo}</div>
-                        <div style="margin-top: 10px;">
-                            <strong>Outros tipos identificados:</strong>
-                            ${rec.tiposSecundarios.map(tipo => 
-                                `<span class="tipo-calculo-badge ${tipo.cor}" title="${tipo.descricao}">${tipo.nome}</span>`
-                            ).join(' ')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            if (calculo.aplicavel && calculo.detalhes && calculo.detalhes.length > 0) {
-                html += '<div class="resultado" style="display: block; background: #d4edda; padding: 15px; border-radius: 8px; margin-top: 10px;">';
-                html += '<h4>Detalhamento do Cálculo</h4>';
-                
-                calculo.detalhes.forEach(detalhe => {
-                    html += `
-                        <div class="detalhes-item">
-                            <span>${detalhe.descricao}:</span>
-                            <span>
-                                ${typeof detalhe.valor === 'number' ? 
-                                  (detalhe.descricao.includes('Alíquota') || detalhe.descricao.includes('Fundo') ? 
-                                   `${detalhe.valor}%` : `R$ ${detalhe.valor.toFixed(2)}`) : 
-                                  detalhe.valor}
-                                ${detalhe.formula ? `<br><small style="color: #666;">${detalhe.formula}</small>` : ''}
-                            </span>
-                        </div>
-                    `;
-                });
-                
-                html += `
-                    <div class="detalhes-total">
-                        <span>TOTAL A RECOLHER (DIFAL + FCP):</span>
-                        <span>R$ ${calculo.total.toFixed(2)}</span>
-                    </div>
-                `;
-                
-                html += '</div>';
-            }
-            
-            detalhesContainer.innerHTML = html;
-        }
-
+        // FUNÇÃO QUE ESTAVA FALTANDO: atualizarResumo
         function atualizarResumo() {
             const resumoDiv = document.getElementById('resumoCalculos');
             
@@ -1606,7 +1940,7 @@
             `;
         }
 
-        // FUNÇÃO CORRIGIDA - processarTodosXMLs
+        // FUNÇÃO QUE ESTAVA FALTANDO: processarTodosXMLs
         function processarTodosXMLs() {
             if (todosCalculos.length === 0) {
                 alert('Não há XMLs para processar. Importe alguns XMLs primeiro.');
@@ -1644,6 +1978,7 @@
             }, 100);
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: exportarExcel
         function exportarExcel() {
             if (todosCalculos.length === 0) {
                 alert('Não há dados para exportar.');
@@ -1670,7 +2005,8 @@
                 'Status': calculo.status === 'Erro' ? 'Erro' : 
                          calculo.aplicavel ? (calculo.difal > 0 ? 'Aplicável' : 'Isento') : 'Não Aplicável',
                 'Motivo': calculo.motivo || calculo.status === 'Erro' ? 'Erro no processamento' : '',
-                'Confiança Recomendação (%)': calculo.recomendacaoCalculo ? calculo.recomendacaoCalculo.confianca : 'N/A'
+                'Confiança Recomendação (%)': calculo.recomendacaoCalculo ? calculo.recomendacaoCalculo.confianca : 'N/A',
+                'Status Pagamento': calculo.statusPagamento || 'Pendente'
             }));
             
             const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
@@ -1686,6 +2022,7 @@
             XLSX.writeFile(workbook, `calculos_difal_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: fazerBackup
         function fazerBackup() {
             if (todosCalculos.length === 0) {
                 alert('Não há dados para backup.');
@@ -1712,6 +2049,7 @@
             alert(`Backup realizado com sucesso! ${todosCalculos.length} registros salvos.`);
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: limparTudo
         function limparTudo() {
             if (confirm('Tem certeza que deseja limpar todos os cálculos?')) {
                 todosCalculos = [];
@@ -1723,22 +2061,24 @@
             }
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: calcularManual
         function calcularManual() {
             const ufOrigem = document.getElementById('ufOrigem').value;
             const ufDestino = document.getElementById('ufDestino').value;
             const valorBase = sanitizarValor(document.getElementById('valorBase').value);
+            const tipoCalculoCodigo = document.getElementById('tipoCalculoManual').value;
 
             if (!ufOrigem || !ufDestino || !valorBase || valorBase <= 0) {
                 alert('Por favor, preencha todos os campos com valores válidos.');
                 return;
             }
 
-            // Para cálculo manual, usar tipo básico por padrão
-            const tipoCalculo = TIPOS_CALCULO.BASICO;
+            const tipoCalculo = TIPOS_CALCULO[tipoCalculoCodigo];
             const resultado = calcularDIFALMultiTipo(ufOrigem, ufDestino, 'consumidor', valorBase, tipoCalculo);
             exibirResultadoManual(resultado);
         }
 
+        // FUNÇÃO QUE ESTAVA FALTANDO: exibirResultadoManual
         function exibirResultadoManual(resultado) {
             const resultadoDiv = document.getElementById('resultadoManual');
             
@@ -1783,7 +2123,7 @@
             resultadoDiv.innerHTML = html;
         }
 
-        // FUNÇÕES DE ADMINISTRAÇÃO DE ALÍQUOTAS
+        // FUNÇÕES DE ADMINISTRAÇÃO DE ALÍQUOTAS QUE ESTAVAM FALTANDO
         function renderizarTabelaAdmin() {
             const tbody = document.getElementById('tabelaAdmin');
             tbody.innerHTML = '';
@@ -1796,7 +2136,7 @@
                     <td><strong>${estado}</strong></td>
                     <td>
                         <input type="number" 
-                               value="${aliquotasInternas[estado]}" 
+                               value="${aliquotasInternas[estado]?.valor || 0}" 
                                step="0.1" 
                                min="0" 
                                max="100"
@@ -1814,14 +2154,18 @@
                                style="width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; text-align: center;">
                         %
                     </td>
-                    <td>${new Date().toLocaleDateString('pt-BR')}</td>
+                    <td>${aliquotasInternas[estado]?.vigencia || '2024-01-01'}</td>
+                    <td>${aliquotasInternas[estado]?.fonte || 'Decreto Estadual'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
         function atualizarAliquotaInterna(estado, valor) {
-            aliquotasInternas[estado] = parseFloat(valor) || 0;
+            if (!aliquotasInternas[estado]) {
+                aliquotasInternas[estado] = { valor: 0, vigencia: '2024-01-01', fonte: 'Decreto Estadual' };
+            }
+            aliquotasInternas[estado].valor = parseFloat(valor) || 0;
             cacheCalculos.clear(); // Limpar cache para recalcular com novas alíquotas
         }
 
@@ -1843,10 +2187,33 @@
         function carregarAliquotasPadrao() {
             if (confirm('Isso irá restaurar as alíquotas padrão. Deseja continuar?')) {
                 aliquotasInternas = {
-                    'AC': 19, 'AL': 20, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20, 'ES': 17, 
-                    'GO': 19, 'MA': 23, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 19, 'PB': 20, 'PR': 19.5, 
-                    'PE': 20.5, 'PI': 22.5, 'RJ': 22, 'RN': 20, 'RS': 17, 'RO': 19.5, 'RR': 20, 'SC': 17, 
-                    'SP': 18, 'SE': 20, 'TO': 20
+                    'AC': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'AL': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'AP': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'AM': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'BA': { valor: 20.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'CE': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'DF': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'ES': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'GO': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'MA': { valor: 23, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'MT': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'MS': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'MG': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'PA': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'PB': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'PR': { valor: 19.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'PE': { valor: 20.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'PI': { valor: 22.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'RJ': { valor: 22, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'RN': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'RS': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'RO': { valor: 19.5, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'RR': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'SC': { valor: 17, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'SP': { valor: 18, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'SE': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
+                    'TO': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' }
                 };
                 
                 fundoPobreza = {
@@ -1906,6 +2273,494 @@
             };
             input.click();
         }
+
+        // NOVAS FUNÇÕES DE GESTÃO DE PAGAMENTOS
+        function atualizarResumoPagamentos() {
+            const resumoDiv = document.getElementById('resumoPagamentos');
+            if (!resumoDiv) return;
+
+            const total = todosCalculos.filter(c => c.aplicavel && c.difal > 0).length;
+            const pendentes = todosCalculos.filter(c => c.aplicavel && c.difal > 0 && (!c.statusPagamento || c.statusPagamento === 'Pendente')).length;
+            const agendados = todosCalculos.filter(c => c.statusPagamento === 'Agendado').length;
+            const pagos = todosCalculos.filter(c => c.statusPagamento === 'Pago').length;
+            const totalValor = todosCalculos.filter(c => c.aplicavel && c.difal > 0).reduce((sum, c) => sum + (c.total || 0), 0);
+            const valorPendente = todosCalculos.filter(c => c.aplicavel && c.difal > 0 && (!c.statusPagamento || c.statusPagamento === 'Pendente')).reduce((sum, c) => sum + (c.total || 0), 0);
+
+            resumoDiv.innerHTML = `
+                <div style="text-align: center; padding: 10px; background: #17a2b8; color: white; border-radius: 5px;">
+                    <div style="font-size: 12px;">Total NF-es</div>
+                    <div style="font-size: 18px; font-weight: bold;">${total}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: #ffc107; color: black; border-radius: 5px;">
+                    <div style="font-size: 12px;">Pendentes</div>
+                    <div style="font-size: 18px; font-weight: bold;">${pendentes}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: #6f42c1; color: white; border-radius: 5px;">
+                    <div style="font-size: 12px;">Agendados</div>
+                    <div style="font-size: 18px; font-weight: bold;">${agendados}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: #28a745; color: white; border-radius: 5px;">
+                    <div style="font-size: 12px;">Pagas</div>
+                    <div style="font-size: 18px; font-weight: bold;">${pagos}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: #dc3545; color: white; border-radius: 5px;">
+                    <div style="font-size: 12px;">Valor Pendente</div>
+                    <div style="font-size: 18px; font-weight: bold;">R$ ${valorPendente.toFixed(2)}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: #343a40; color: white; border-radius: 5px;">
+                    <div style="font-size: 12px;">Valor Total</div>
+                    <div style="font-size: 18px; font-weight: bold;">R$ ${totalValor.toFixed(2)}</div>
+                </div>
+            `;
+        }
+
+        function renderizarTabelaGestao() {
+            const tbody = document.getElementById('tabelaGestao');
+            if (!tbody) return;
+
+            const calculosComDIFAL = todosCalculos.filter(c => c.aplicavel && c.difal > 0);
+            
+            if (calculosComDIFAL.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 20px;">
+                            Nenhum cálculo com DIFAL aplicável
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            calculosComDIFAL.forEach(calculo => {
+                const tr = document.createElement('tr');
+                const statusPagamento = calculo.statusPagamento || 'Pendente';
+                const mesReferencia = calculo.mesReferencia || new Date().toLocaleDateString('pt-BR');
+                const vencimento = calculo.vencimento || 'Não definido';
+
+                const statusClass = statusPagamento === 'Pago' ? 'status-pago' : 
+                                 statusPagamento === 'Agendado' ? 'status-agendado' : 
+                                 'status-pendente';
+
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="select-item" value="${calculo.id}"></td>
+                    <td title="${calculo.fileName}">${calculo.fileName.length > 20 ? calculo.fileName.substring(0, 20) + '...' : calculo.fileName}</td>
+                    <td>${calculo.destino}</td>
+                    <td>R$ ${calculo.difal?.toFixed(2) || '0.00'}</td>
+                    <td>R$ ${calculo.fcp?.toFixed(2) || '0.00'}</td>
+                    <td><strong>R$ ${calculo.total?.toFixed(2) || '0.00'}</strong></td>
+                    <td><span class="${statusClass}">${statusPagamento}</span></td>
+                    <td>${mesReferencia}</td>
+                    <td>${vencimento}</td>
+                    <td>
+                        <button onclick="alterarStatusPagamento('${calculo.id}', 'Pago')" class="btn btn-success" style="padding: 2px 8px; font-size: 11px;">Pago</button>
+                        <button onclick="alterarStatusPagamento('${calculo.id}', 'Agendado')" class="btn btn-warning" style="padding: 2px 8px; font-size: 11px;">Agendar</button>
+                        <button onclick="alterarStatusPagamento('${calculo.id}', 'Pendente')" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;">Pendente</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function alterarStatusPagamento(calculoId, novoStatus) {
+            const calculo = todosCalculos.find(c => c.id === calculoId);
+            if (!calculo) return;
+
+            calculo.statusPagamento = novoStatus;
+            
+            // Definir mês de referência e vencimento
+            const agora = new Date();
+            if (novoStatus === 'Agendado') {
+                const proximoMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
+                calculo.mesReferencia = proximoMes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                calculo.vencimento = new Date(agora.getFullYear(), agora.getMonth() + 1, 10).toLocaleDateString('pt-BR');
+            } else if (novoStatus === 'Pago') {
+                calculo.mesReferencia = agora.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                calculo.vencimento = 'Pago em ' + agora.toLocaleDateString('pt-BR');
+            }
+
+            atualizarResumoPagamentos();
+            renderizarTabelaGestao();
+            salvarHistorico();
+        }
+
+        function agendarParaMesSeguinte() {
+            const selecionados = document.querySelectorAll('.select-item:checked');
+            if (selecionados.length === 0) {
+                alert('Selecione pelo menos uma NF-e para agendar.');
+                return;
+            }
+
+            selecionados.forEach(checkbox => {
+                alterarStatusPagamento(checkbox.value, 'Agendado');
+            });
+
+            alert(`${selecionados.length} NF-e(s) agendada(s) para o próximo mês.`);
+        }
+
+        function marcarComoPago() {
+            const selecionados = document.querySelectorAll('.select-item:checked');
+            if (selecionados.length === 0) {
+                alert('Selecione pelo menos uma NF-e para marcar como paga.');
+                return;
+            }
+
+            selecionados.forEach(checkbox => {
+                alterarStatusPagamento(checkbox.value, 'Pago');
+            });
+
+            alert(`${selecionados.length} NF-e(s) marcada(s) como pagas.`);
+        }
+
+        function selecionarTodos() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.select-item');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function renderizarGraficoPagamentos() {
+            const container = document.getElementById('graficoPagamentos');
+            if (!container) return;
+
+            // Agrupar por mês
+            const pagamentosPorMes = {};
+            todosCalculos.forEach(calculo => {
+                if (calculo.aplicavel && calculo.difal > 0) {
+                    const mes = calculo.mesReferencia || 'Não definido';
+                    if (!pagamentosPorMes[mes]) {
+                        pagamentosPorMes[mes] = { total: 0, count: 0 };
+                    }
+                    pagamentosPorMes[mes].total += calculo.total || 0;
+                    pagamentosPorMes[mes].count += 1;
+                }
+            });
+
+            // Criar gráfico simples com HTML
+            let html = '<div style="display: flex; align-items: end; height: 150px; gap: 10px; padding: 10px;">';
+            Object.entries(pagamentosPorMes).forEach(([mes, data]) => {
+                const altura = Math.max(20, (data.total / Math.max(...Object.values(pagamentosPorMes).map(d => d.total))) * 120);
+                html += `
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 30px; background: #3498db; height: ${altura}px; border-radius: 3px;"></div>
+                        <div style="font-size: 10px; margin-top: 5px; text-align: center;">${mes.split(' ')[0]}</div>
+                        <div style="font-size: 9px; color: #666;">R$ ${data.total.toFixed(0)}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // NOVAS FUNÇÕES PARA MODIFICAÇÃO DE TIPO DE CÁLCULO
+        function alterarTipoCalculo(calculoId, novoTipoCodigo) {
+            const calculo = todosCalculos.find(c => c.id === calculoId);
+            if (!calculo) return;
+
+            const novoTipo = TIPOS_CALCULO[novoTipoCodigo];
+            if (!novoTipo) return;
+
+            // Recalcular com novo tipo
+            const resultado = calcularDIFALMultiTipo(
+                calculo.origem,
+                calculo.destino,
+                calculo.tipoDestinatario,
+                calculo.baseCalculo,
+                novoTipo
+            );
+
+            // Atualizar cálculo
+            Object.assign(calculo, resultado);
+            calculo.recomendacaoCalculo.tipoPrincipal = novoTipo;
+            calculo.recomendacaoCalculo.motivo = `Tipo alterado manualmente para: ${novoTipo.nome}`;
+
+            atualizarTabela();
+            salvarHistorico();
+            
+            // Mostrar detalhes atualizados
+            mostrarDetalhes(calculo);
+        }
+
+        function compararTiposCalculo(calculoId) {
+            const calculo = todosCalculos.find(c => c.id === calculoId);
+            if (!calculo) return;
+
+            const tiposComparacao = Object.values(TIPOS_CALCULO);
+            let html = '<div class="comparacao-tipos"><h4>🔍 Comparação entre Tipos de Cálculo</h4>';
+
+            tiposComparacao.forEach(tipo => {
+                const resultado = calcularDIFALMultiTipo(
+                    calculo.origem,
+                    calculo.destino,
+                    calculo.tipoDestinatario,
+                    calculo.baseCalculo,
+                    tipo
+                );
+
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; 
+                                ${tipo.codigo === calculo.recomendacaoCalculo.tipoPrincipal.codigo ? 'background: #e3f2fd;' : ''}">
+                        <strong class="tipo-calculo-badge ${tipo.cor}">${tipo.nome}</strong>
+                        <div style="font-size: 12px; margin-top: 5px;">
+                            DIFAL: R$ ${resultado.difal?.toFixed(2) || '0.00'} | 
+                            FCP: R$ ${resultado.fcp?.toFixed(2) || '0.00'} | 
+                            Total: R$ ${resultado.total?.toFixed(2) || '0.00'}
+                        </div>
+                        <div style="font-size: 11px; color: #666;">${tipo.descricao}</div>
+                        <button onclick="alterarTipoCalculo('${calculoId}', '${tipo.codigo}')" 
+                                style="margin-top: 5px; padding: 2px 8px; font-size: 11px;">
+                            Usar este tipo
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            
+            const detalhesContainer = document.getElementById('detalhesContainer');
+            const existingComparison = detalhesContainer.querySelector('.comparacao-tipos');
+            if (existingComparison) {
+                existingComparison.remove();
+            }
+            detalhesContainer.insertAdjacentHTML('beforeend', html);
+        }
+
+        // FUNÇÃO MELHORADA: mostrarDetalhes com opção de alterar tipo
+        function mostrarDetalhes(calculo) {
+            const detalhesContainer = document.getElementById('detalhesContainer');
+            
+            let html = `
+                <div class="xml-info">
+                    <h3>Detalhes do Cálculo - ${calculo.fileName}</h3>
+                    <div><strong>Origem:</strong> ${calculo.origem}</div>
+                    <div><strong>Destino:</strong> ${calculo.destino}</div>
+                    <div><strong>Tipo Destinatário:</strong> ${calculo.tipoDestinatario}</div>
+                    <div><strong>Status:</strong> ${calculo.aplicavel ? (calculo.difal > 0 ? 'DIFAL Aplicável' : 'Isento') : 'Não Aplicável'}</div>
+                    ${calculo.motivo ? `<div><strong>Motivo:</strong> ${calculo.motivo}</div>` : ''}
+                    <div><strong>Data/Hora:</strong> ${calculo.timestamp}</div>
+                </div>
+            `;
+            
+            // SELEÇÃO DE TIPO DE CÁLCULO
+            html += `
+                <div class="selecao-tipo-calculo">
+                    <h4>🔄 Alterar Tipo de Cálculo</h4>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
+                        ${Object.values(TIPOS_CALCULO).map(tipo => `
+                            <button onclick="alterarTipoCalculo('${calculo.id}', '${tipo.codigo}')" 
+                                    class="tipo-calculo-badge ${tipo.cor} ${tipo.codigo === calculo.recomendacaoCalculo.tipoPrincipal.codigo ? 'active' : ''}"
+                                    style="cursor: pointer; border: 2px solid ${tipo.codigo === calculo.recomendacaoCalculo.tipoPrincipal.codigo ? '#000' : 'transparent'}">
+                                ${tipo.nome}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button onclick="compararTiposCalculo('${calculo.id}')" class="btn btn-info" style="padding: 5px 10px; font-size: 12px;">
+                        🔍 Comparar Todos os Tipos
+                    </button>
+                </div>
+            `;
+            
+            // RECOMENDAÇÃO DE TIPO DE CÁLCULO
+            if (calculo.recomendacaoCalculo) {
+                const rec = calculo.recomendacaoCalculo;
+                html += `
+                    <div class="recomendacao-box">
+                        <h4>🎯 Recomendação de Tipo de Cálculo</h4>
+                        <div style="margin: 10px 0;">
+                            <span class="tipo-calculo-badge ${rec.tipoPrincipal.cor}">
+                                ${rec.tipoPrincipal.nome}
+                            </span>
+                            <strong> (Confiança: ${rec.confianca}%)</strong>
+                        </div>
+                        <div><strong>Motivo:</strong> ${rec.motivo}</div>
+                        <div style="margin-top: 10px;">
+                            <strong>Outros tipos identificados:</strong>
+                            ${rec.tiposSecundarios.map(tipo => 
+                                `<span class="tipo-calculo-badge ${tipo.cor}" title="${tipo.descricao}">${tipo.nome}</span>`
+                            ).join(' ')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // DETALHES DO CÁLCULO
+            if (calculo.aplicavel && calculo.detalhes && calculo.detalhes.length > 0) {
+                html += '<div class="resultado" style="display: block; background: #d4edda; padding: 15px; border-radius: 8px; margin-top: 10px;">';
+                html += '<h4>Detalhamento do Cálculo</h4>';
+                
+                calculo.detalhes.forEach(detalhe => {
+                    html += `
+                        <div class="detalhes-item">
+                            <span>${detalhe.descricao}:</span>
+                            <span>
+                                ${typeof detalhe.valor === 'number' ? 
+                                  (detalhe.descricao.includes('Alíquota') || detalhe.descricao.includes('Fundo') ? 
+                                   `${detalhe.valor}%` : `R$ ${detalhe.valor.toFixed(2)}`) : 
+                                  detalhe.valor}
+                                ${detalhe.formula ? `<br><small style="color: #666;">${detalhe.formula}</small>` : ''}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                if (calculo.erro) {
+                    html += `<div style="color: #dc3545; margin-top: 10px;"><strong>Erro:</strong> ${calculo.erro}</div>`;
+                }
+                
+                html += `
+                    <div class="detalhes-total">
+                        <span>TOTAL A RECOLHER (DIFAL + FCP):</span>
+                        <span>R$ ${calculo.total.toFixed(2)}</span>
+                    </div>
+                `;
+                
+                html += '</div>';
+            }
+
+            // GESTÃO DE PAGAMENTO
+            if (calculo.aplicavel && calculo.difal > 0) {
+                const statusPagamento = calculo.statusPagamento || 'Pendente';
+                html += `
+                    <div class="gestao-pagamento">
+                        <h4>💰 Gestão de Pagamento</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                            <div>
+                                <strong>Status:</strong> 
+                                <span class="${statusPagamento === 'Pago' ? 'status-pago' : statusPagamento === 'Agendado' ? 'status-agendado' : 'status-pendente'}">
+                                    ${statusPagamento}
+                                </span>
+                            </div>
+                            <div><strong>Mês Referência:</strong> ${calculo.mesReferencia || 'Não definido'}</div>
+                            <div><strong>Vencimento:</strong> ${calculo.vencimento || 'Não definido'}</div>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="alterarStatusPagamento('${calculo.id}', 'Pago')" class="btn btn-success" style="padding: 5px 10px;">Marcar como Pago</button>
+                            <button onclick="alterarStatusPagamento('${calculo.id}', 'Agendado')" class="btn btn-warning" style="padding: 5px 10px;">Agendar Próximo Mês</button>
+                            <button onclick="alterarStatusPagamento('${calculo.id}', 'Pendente')" class="btn btn-secondary" style="padding: 5px 10px;">Voltar para Pendente</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detalhesContainer.innerHTML = html;
+        }
+
+        // FUNÇÃO: alternarModoEscuro
+        function alternarModoEscuro() {
+            const body = document.body;
+            const container = document.querySelector('.container');
+            
+            body.classList.toggle('modo-escuro');
+            container.classList.toggle('modo-escuro');
+            
+            configUsuario.modoEscuro = body.classList.contains('modo-escuro');
+            salvarConfiguracoes();
+        }
+
+        // FUNÇÃO: gerarRelatorioPagamentos
+        function gerarRelatorioPagamentos() {
+            const calculosComDIFAL = todosCalculos.filter(c => c.aplicavel && c.difal > 0);
+            
+            if (calculosComDIFAL.length === 0) {
+                alert('Não há pagamentos para gerar relatório.');
+                return;
+            }
+
+            const dadosRelatorio = calculosComDIFAL.map(calculo => ({
+                'NF-e': calculo.fileName,
+                'UF Destino': calculo.destino,
+                'Valor DIFAL': calculo.difal?.toFixed(2) || '0.00',
+                'Valor FCP': calculo.fcp?.toFixed(2) || '0.00',
+                'Total': calculo.total?.toFixed(2) || '0.00',
+                'Status': calculo.statusPagamento || 'Pendente',
+                'Mês Referência': calculo.mesReferencia || 'Não definido',
+                'Vencimento': calculo.vencimento || 'Não definido',
+                'Tipo Cálculo': calculo.recomendacaoCalculo?.tipoPrincipal.nome || 'N/A'
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dadosRelatorio);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Relatório Pagamentos');
+            
+            XLSX.writeFile(workbook, `relatorio_pagamentos_difal_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // FUNÇÃO: exportarGNRE
+        function exportarGNRE() {
+            const calculosPendentes = todosCalculos.filter(c => 
+                c.aplicavel && c.difal > 0 && (!c.statusPagamento || c.statusPagamento === 'Pendente')
+            );
+            
+            if (calculosPendentes.length === 0) {
+                alert('Não há pagamentos pendentes para exportar para GNRE.');
+                return;
+            }
+
+            const dadosGNRE = calculosPendentes.map(calculo => ({
+                'UF': calculo.destino,
+                'Valor': calculo.total?.toFixed(2) || '0.00',
+                'CNPJ Contribuinte': 'A DEFINIR',
+                'Período': new Date().toLocaleDateString('pt-BR'),
+                'Tipo': 'DIFAL',
+                'Detalhes': `NF-e: ${calculo.fileName}`
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dadosGNRE);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados GNRE');
+            
+            XLSX.writeFile(workbook, `gnre_difal_${new Date().toISOString().split('T')[0]}.xlsx`);
+            alert(`Arquivo GNRE gerado com ${calculosPendentes.length} registros.`);
+        }
+
+        // FUNÇÃO: filtrarTabelaGestao
+        function filtrarTabelaGestao() {
+            const filtroTexto = document.getElementById('filtroGestao').value.toLowerCase();
+            const filtroMes = document.getElementById('filtroMes').value;
+            const filtroAno = document.getElementById('filtroAno').value;
+            
+            const linhas = document.querySelectorAll('#tabelaGestao tr');
+            
+            linhas.forEach(linha => {
+                if (linha.cells.length < 2) return;
+                
+                const textoLinha = linha.textContent.toLowerCase();
+                const mesLinha = linha.cells[7]?.textContent || '';
+                const anoLinha = linha.cells[7]?.textContent || '';
+                
+                const correspondeTexto = textoLinha.includes(filtroTexto);
+                const correspondeMes = !filtroMes || mesLinha.includes(filtroMes);
+                const correspondeAno = !filtroAno || anoLinha.includes(filtroAno);
+                
+                linha.style.display = (correspondeTexto && correspondeMes && correspondeAno) ? '' : 'none';
+            });
+        }
+
+        // FUNÇÃO: inicializarTooltips
+        function inicializarTooltips() {
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                tooltip.addEventListener('mouseenter', function() {
+                    const tooltipText = this.querySelector('.tooltiptext');
+                    if (tooltipText) {
+                        tooltipText.style.visibility = 'visible';
+                        tooltipText.style.opacity = '1';
+                    }
+                });
+                
+                tooltip.addEventListener('mouseleave', function() {
+                    const tooltipText = this.querySelector('.tooltiptext');
+                    if (tooltipText) {
+                        tooltipText.style.visibility = 'hidden';
+                        tooltipText.style.opacity = '0';
+                    }
+                });
+            });
+        }
+
     </script>
 </body>
 </html>
