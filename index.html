@@ -438,6 +438,7 @@
         .tipo-st { background: #fd7e14; color: white; }
         .tipo-simples { background: #20c997; color: white; }
         .tipo-beneficio { background: #ffc107; color: black; }
+        .tipo-personalizado { background: #9c27b0; color: white; }
         
         .admin-section {
             background: white;
@@ -490,6 +491,41 @@
             font-weight: bold;
         }
 
+        /* ESTILOS PARA CRIADOR DE CÁLCULOS PERSONALIZADOS */
+        .criador-calculo {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #9c27b0;
+            margin-top: 15px;
+        }
+
+        .formula-input {
+            font-family: monospace;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .variaveis-disponiveis {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .exemplo-formula {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -525,6 +561,7 @@
             <button class="tab active" onclick="abrirTab('tabCalculadora')">Calculadora</button>
             <button class="tab" onclick="abrirTab('tabAdmin')">Administrar Alíquotas</button>
             <button class="tab" onclick="abrirTab('tabGestao')">Gestão de Pagamentos</button>
+            <button class="tab" onclick="abrirTab('tabPersonalizado')">Criar Cálculo</button>
         </div>
 
         <div id="tabCalculadora" class="tab-content active">
@@ -675,6 +712,61 @@
                 </div>
             </div>
         </div>
+
+        <div id="tabPersonalizado" class="tab-content">
+            <div class="admin-section">
+                <h2>🧩 Criador de Cálculos Personalizados</h2>
+                <p>Crie suas próprias regras de cálculo personalizadas usando variáveis disponíveis.</p>
+                
+                <div class="criador-calculo">
+                    <div class="form-group">
+                        <label for="nomeCalculoPersonalizado">Nome do Cálculo:</label>
+                        <input type="text" id="nomeCalculoPersonalizado" placeholder="Ex: Cálculo com Redução Especial">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descricaoCalculoPersonalizado">Descrição:</label>
+                        <input type="text" id="descricaoCalculoPersonalizado" placeholder="Ex: Cálculo com 20% de redução na base">
+                    </div>
+                    
+                    <div class="variaveis-disponiveis">
+                        <strong>Variáveis Disponíveis:</strong><br>
+                        <code>base</code> - Base de cálculo<br>
+                        <code>aliqInterna</code> - Alíquota interna do estado destino<br>
+                        <code>aliqInterestadual</code> - Alíquota interestadual<br>
+                        <code>fcp</code> - Percentual do FCP<br>
+                        <code>diferencial</code> - Diferença entre alíquotas (aliqInterna - aliqInterestadual)
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formulaPersonalizada">Fórmula Personalizada:</label>
+                        <textarea id="formulaPersonalizada" class="formula-input" rows="4" placeholder="Ex: (base * 0.8) * (aliqInterna - aliqInterestadual) / 100"></textarea>
+                    </div>
+                    
+                    <div class="exemplo-formula">
+                        <strong>Exemplos de Fórmulas:</strong><br>
+                        • <code>base * (aliqInterna - aliqInterestadual) / 100</code> - Cálculo básico<br>
+                        • <code>(base * diferencial / 100) / (1 - aliqInterna / 100)</code> - Cálculo por dentro<br>
+                        • <code>(base * 0.7) * diferencial / 100</code> - Com 30% de redução na base<br>
+                        • <code>base * diferencial / 100 + base * fcp / 100</code> - Com FCP
+                    </div>
+                    
+                    <div class="acoes-container">
+                        <button class="btn btn-primary" onclick="testarFormula()">Testar Fórmula</button>
+                        <button class="btn btn-success" onclick="salvarCalculoPersonalizado()">Salvar Cálculo Personalizado</button>
+                    </div>
+                    
+                    <div id="resultadoTeste" style="margin-top: 15px;"></div>
+                </div>
+                
+                <div class="calculos-salvos" style="margin-top: 20px;">
+                    <h3>Cálculos Personalizados Salvos</h3>
+                    <div id="lista-calculos-personalizados">
+                        <!-- Lista de cálculos personalizados será preenchida via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -684,42 +776,42 @@
                 codigo: 'BASICO',
                 nome: 'Cálculo Básico (Por Fora)',
                 descricao: 'Operações padrão para consumidor final não contribuinte',
-                formula: 'DIFAL = Base × (Alíquota Interna - Alíquota Interestadual)',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100',
                 cor: 'tipo-basico'
             },
             POR_DENTRO: {
                 codigo: 'POR_DENTRO',
                 nome: 'Cálculo Por Dentro',
                 descricao: 'Quando o ICMS compõe o preço da mercadoria',
-                formula: 'DIFAL = [Base × (Alíquota Interna - Alíquota Interestadual)] ÷ (1 - Alíquota Interna)',
+                formula: '(base * (aliqInterna - aliqInterestadual) / 100) / (1 - aliqInterna / 100)',
                 cor: 'tipo-por-dentro'
             },
             COM_FCP: {
                 codigo: 'COM_FCP',
                 nome: 'Com FCP',
                 descricao: 'Estados com adicional de Fundo de Combate à Pobreza',
-                formula: 'FCP = Base × Alíquota FCP | Total = DIFAL + FCP',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100 + base * fcp / 100',
                 cor: 'tipo-fcp'
             },
             IMPORTADO: {
                 codigo: 'IMPORTADO',
                 nome: 'Produtos Importados',
                 descricao: 'Mercadorias importadas do exterior',
-                formula: 'Alíquota Interestadual = 4% (Resolução Senado 13/2012)',
+                formula: 'base * (aliqInterna - 4) / 100',
                 cor: 'tipo-importado'
             },
             SUBSTITUICAO_TRIBUTARIA: {
                 codigo: 'SUBSTITUICAO_TRIBUTARIA',
                 nome: 'Substituição Tributária',
                 descricao: 'Quando a mercadoria já tem ICMS-ST',
-                formula: 'Regras específicas por estado/produto',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100',
                 cor: 'tipo-st'
             },
             BENEFICIO_FISCAL: {
                 codigo: 'BENEFICIO_FISCAL',
                 nome: 'Benefício Fiscal',
                 descricao: 'Redução da base ou alíquota interna',
-                formula: 'Base/Alíquota reduzida conforme convênio',
+                formula: '(base * 0.7) * (aliqInterna - aliqInterestadual) / 100',
                 cor: 'tipo-beneficio'
             }
         };
@@ -765,6 +857,7 @@
         // Array para armazenar todos os cálculos
         let todosCalculos = [];
         let nfSelecionada = null;
+        let calculosPersonalizados = {};
 
         // FUNÇÕES PRINCIPAIS
         function configurarUpload() {
@@ -798,6 +891,30 @@
             });
         }
 
+        // FUNÇÃO MELHORADA: Extrai número da NF do XML
+        function extrairNumeroNF(xmlContent) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+                
+                // Tenta encontrar o número da NF de várias formas
+                let nfNum = xmlDoc.getElementsByTagName("nNF")[0]?.textContent;
+                if (!nfNum) {
+                    nfNum = xmlDoc.getElementsByTagName("numero")[0]?.textContent;
+                }
+                if (!nfNum) {
+                    // Tenta extrair do nome do arquivo
+                    const matches = xmlContent.match(/<nNF>(\d+)<\/nNF>/);
+                    if (matches) nfNum = matches[1];
+                }
+                
+                return nfNum || "Número não encontrado";
+            } catch (error) {
+                console.error("Erro ao extrair número da NF:", error);
+                return "Erro na extração";
+            }
+        }
+
         function processarArquivos(files) {
             const xmlFiles = Array.from(files).filter(file => file.name.endsWith('.xml'));
             
@@ -808,10 +925,14 @@
 
             // Para demonstração, vamos criar NF-es de exemplo
             xmlFiles.forEach((file, index) => {
-                setTimeout(() => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const numeroNF = extrairNumeroNF(e.target.result);
+                    
                     const novaNF = {
                         id: Date.now() + index,
                         fileName: file.name,
+                        numeroNF: numeroNF,
                         origem: ['SP', 'RJ', 'PR', 'RS', 'MG'][Math.floor(Math.random() * 5)],
                         destino: ['MG', 'BA', 'SC', 'AM', 'CE'][Math.floor(Math.random() * 5)],
                         valorTotal: Math.floor(500 + Math.random() * 3000),
@@ -841,7 +962,8 @@
                         atualizarResumo();
                         salvarHistorico();
                     }
-                }, index * 100);
+                };
+                reader.readAsText(file);
             });
 
             alert(`${xmlFiles.length} arquivo(s) XML processado(s) com sucesso!`);
@@ -858,6 +980,7 @@
             return 12;
         }
 
+        // FUNÇÃO MELHORADA: Suporte a cálculos personalizados
         function calcularDIFALMultiTipo(origem, destino, tipoDestinatario, baseCalculo, tipoCalculo) {
             let resultado = {
                 baseCalculo: baseCalculo,
@@ -868,46 +991,63 @@
                 detalhes: []
             };
 
-            // Ajustar alíquota interestadual para importados
-            if (tipoCalculo.codigo === 'IMPORTADO') {
-                resultado.aliqInterestadual = 4;
-            }
+            // Preparar variáveis para a fórmula
+            const variaveis = {
+                base: baseCalculo,
+                aliqInterna: resultado.aliqInterna,
+                aliqInterestadual: resultado.aliqInterestadual,
+                fcp: resultado.percFCP,
+                diferencial: resultado.aliqInterna - resultado.aliqInterestadual
+            };
 
             try {
-                // Cálculo do DIFAL conforme tipo
-                switch (tipoCalculo.codigo) {
-                    case 'BASICO':
+                // Verificar se é um cálculo personalizado
+                if (tipoCalculo.codigo.startsWith('PERSONALIZADO_')) {
+                    const calculoPersonalizado = calculosPersonalizados[tipoCalculo.codigo];
+                    if (calculoPersonalizado && calculoPersonalizado.formula) {
+                        // Executar fórmula personalizada
+                        const formula = calculoPersonalizado.formula;
+                        resultado.difal = executarFormulaPersonalizada(formula, variaveis);
+                    } else {
                         resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                        break;
-                        
-                    case 'POR_DENTRO':
-                        const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
-                        const divisor = (1 - resultado.aliqInterna / 100);
-                        resultado.difal = (baseCalculo * diferencial / 100) / divisor;
-                        break;
-                        
-                    case 'COM_FCP':
-                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                        break;
-                        
-                    case 'IMPORTADO':
-                        resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
-                        break;
-                        
-                    case 'SUBSTITUICAO_TRIBUTARIA':
-                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                        resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
-                        break;
-                        
-                    case 'BENEFICIO_FISCAL':
-                        const baseReduzida = baseCalculo * 0.7;
-                        resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                        resultado.baseCalculoOriginal = baseCalculo;
-                        resultado.baseCalculoReduzida = baseReduzida;
-                        break;
-                        
-                    default:
-                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    }
+                } else {
+                    // Cálculo do DIFAL conforme tipo padrão
+                    switch (tipoCalculo.codigo) {
+                        case 'BASICO':
+                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                            break;
+                            
+                        case 'POR_DENTRO':
+                            const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
+                            const divisor = (1 - resultado.aliqInterna / 100);
+                            resultado.difal = (baseCalculo * diferencial / 100) / divisor;
+                            break;
+                            
+                        case 'COM_FCP':
+                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                            break;
+                            
+                        case 'IMPORTADO':
+                            resultado.aliqInterestadual = 4;
+                            resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
+                            break;
+                            
+                        case 'SUBSTITUICAO_TRIBUTARIA':
+                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                            resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
+                            break;
+                            
+                        case 'BENEFICIO_FISCAL':
+                            const baseReduzida = baseCalculo * 0.7;
+                            resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                            resultado.baseCalculoOriginal = baseCalculo;
+                            resultado.baseCalculoReduzida = baseReduzida;
+                            break;
+                            
+                        default:
+                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                    }
                 }
 
                 // Calcular FCP se aplicável
@@ -924,6 +1064,33 @@
             return resultado;
         }
 
+        // FUNÇÃO NOVA: Executar fórmula personalizada com segurança
+        function executarFormulaPersonalizada(formula, variaveis) {
+            try {
+                // Substituir variáveis na fórmula
+                let formulaExecutavel = formula;
+                for (const [variavel, valor] of Object.entries(variaveis)) {
+                    formulaExecutavel = formulaExecutavel.replace(new RegExp(variavel, 'g'), valor);
+                }
+                
+                // Avaliar a fórmula (com validações de segurança)
+                if (/[^0-9+\-*/().\s]/.test(formulaExecutavel)) {
+                    throw new Error('Fórmula contém caracteres não permitidos');
+                }
+                
+                const resultado = eval(formulaExecutavel);
+                
+                if (isNaN(resultado) || !isFinite(resultado)) {
+                    throw new Error('Resultado da fórmula é inválido');
+                }
+                
+                return resultado;
+            } catch (error) {
+                console.error('Erro ao executar fórmula personalizada:', error);
+                throw new Error(`Erro na fórmula: ${error.message}`);
+            }
+        }
+
         // NOVAS FUNÇÕES PARA INTERFACE SIMPLIFICADA
         function renderizarListaNFes() {
             const container = document.getElementById('lista-nfes');
@@ -935,18 +1102,24 @@
             }
 
             todosCalculos.forEach(calculo => {
-                const tipo = TIPOS_CALCULO[calculo.tipoCalculo] || TIPOS_CALCULO.BASICO;
+                const tipo = TIPOS_CALCULO[calculo.tipoCalculo] || 
+                            calculosPersonalizados[calculo.tipoCalculo] || 
+                            TIPOS_CALCULO.BASICO;
                 const div = document.createElement('div');
                 div.className = `nf-item ${calculo === nfSelecionada ? 'active' : ''}`;
                 div.dataset.id = calculo.id;
                 
+                // Usar número da NF em vez do nome do arquivo
+                const displayName = calculo.numeroNF && calculo.numeroNF !== "Número não encontrado" ? 
+                    `NF-e ${calculo.numeroNF}` : calculo.fileName;
+                
                 div.innerHTML = `
                     <div class="nf-header">
-                        <div class="nf-name">${calculo.fileName}</div>
+                        <div class="nf-name">${displayName}</div>
                         <div class="nf-valor">R$ ${calculo.valorTotal?.toFixed(2) || calculo.baseCalculo?.toFixed(2)}</div>
                     </div>
                     <div class="nf-origem-destino">${calculo.origem} → ${calculo.destino}</div>
-                    <div class="tipo-calculo-badge ${tipo.cor}">${tipo.nome}</div>
+                    <div class="tipo-calculo-badge ${tipo.cor || 'tipo-basico'}">${tipo.nome}</div>
                 `;
                 
                 container.appendChild(div);
@@ -979,12 +1152,18 @@
                 return;
             }
 
-            const tipoAtual = TIPOS_CALCULO[nfSelecionada.tipoCalculo] || TIPOS_CALCULO.BASICO;
+            const tipoAtual = TIPOS_CALCULO[nfSelecionada.tipoCalculo] || 
+                             calculosPersonalizados[nfSelecionada.tipoCalculo] || 
+                             TIPOS_CALCULO.BASICO;
             const valorAtual = nfSelecionada.total || 0;
+
+            // Usar número da NF em vez do nome do arquivo
+            const displayName = nfSelecionada.numeroNF && nfSelecionada.numeroNF !== "Número não encontrado" ? 
+                `NF-e ${nfSelecionada.numeroNF}` : nfSelecionada.fileName;
 
             let html = `
                 <div class="resumo-calculo">
-                    <h3>Alterar Tipo de Cálculo - ${nfSelecionada.fileName}</h3>
+                    <h3>Alterar Tipo de Cálculo - ${displayName}</h3>
                     <div class="resumo-item">
                         <span>Origem → Destino:</span>
                         <span>${nfSelecionada.origem} → ${nfSelecionada.destino}</span>
@@ -995,7 +1174,7 @@
                     </div>
                     <div class="resumo-item">
                         <span>Tipo Atual:</span>
-                        <span class="tipo-calculo-badge ${tipoAtual.cor}">${tipoAtual.nome}</span>
+                        <span class="tipo-calculo-badge ${tipoAtual.cor || 'tipo-basico'}">${tipoAtual.nome}</span>
                     </div>
                     <div class="resumo-total">
                         <span>Valor Atual:</span>
@@ -1006,8 +1185,10 @@
                 <div class="tipos-calculo-container" id="tipos-calculo">
             `;
 
-            // Gerar opções de tipos de cálculo
-            Object.entries(TIPOS_CALCULO).forEach(([codigo, tipo]) => {
+            // Gerar opções de tipos de cálculo (padrão + personalizados)
+            const todosTipos = {...TIPOS_CALCULO, ...calculosPersonalizados};
+            
+            Object.entries(todosTipos).forEach(([codigo, tipo]) => {
                 const resultado = calcularDIFALMultiTipo(
                     nfSelecionada.origem,
                     nfSelecionada.destino,
@@ -1069,12 +1250,13 @@
             }
 
             // Recalcular com novo tipo
+            const tipo = TIPOS_CALCULO[tipoSelecionado] || calculosPersonalizados[tipoSelecionado];
             const resultado = calcularDIFALMultiTipo(
                 nfSelecionada.origem,
                 nfSelecionada.destino,
                 nfSelecionada.tipoDestinatario,
                 nfSelecionada.baseCalculo,
-                TIPOS_CALCULO[tipoSelecionado]
+                tipo
             );
 
             // Atualizar cálculo
@@ -1086,7 +1268,7 @@
             mostrarDetalhesCalculo();
             salvarHistorico();
             
-            alert(`Tipo de cálculo alterado para: ${TIPOS_CALCULO[tipoSelecionado].nome}`);
+            alert(`Tipo de cálculo alterado para: ${tipo.nome}`);
         }
 
         function compararTiposCalculo() {
@@ -1097,8 +1279,9 @@
             
             let comparacao = `Comparação de tipos de cálculo para ${nfSelecionada.fileName}:\n\n`;
             const valorAtual = nfSelecionada.total || 0;
+            const todosTipos = {...TIPOS_CALCULO, ...calculosPersonalizados};
             
-            Object.entries(TIPOS_CALCULO).forEach(([codigo, tipo]) => {
+            Object.entries(todosTipos).forEach(([codigo, tipo]) => {
                 const resultado = calcularDIFALMultiTipo(
                     nfSelecionada.origem,
                     nfSelecionada.destino,
@@ -1117,6 +1300,130 @@
             alert(comparacao);
         }
 
+        // FUNÇÕES PARA CÁLCULOS PERSONALIZADOS
+        function testarFormula() {
+            const nome = document.getElementById('nomeCalculoPersonalizado').value;
+            const descricao = document.getElementById('descricaoCalculoPersonalizado').value;
+            const formula = document.getElementById('formulaPersonalizada').value;
+            
+            if (!nome || !formula) {
+                alert('Preencha o nome e a fórmula para testar.');
+                return;
+            }
+            
+            // Dados de exemplo para teste
+            const variaveisTeste = {
+                base: 1000,
+                aliqInterna: 18,
+                aliqInterestadual: 12,
+                fcp: 2,
+                diferencial: 6
+            };
+            
+            try {
+                const resultado = executarFormulaPersonalizada(formula, variaveisTeste);
+                const resultadoDiv = document.getElementById('resultadoTeste');
+                
+                resultadoDiv.innerHTML = `
+                    <div style="background: #d4edda; padding: 12px; border-radius: 6px;">
+                        <h4>✅ Teste Bem-Sucedido!</h4>
+                        <p><strong>Fórmula:</strong> ${formula}</p>
+                        <p><strong>Com base = R$ 1.000,00:</strong></p>
+                        <p><strong>Resultado:</strong> R$ ${resultado.toFixed(2)}</p>
+                        <p><small>Variáveis usadas: base=1000, aliqInterna=18, aliqInterestadual=12, fcp=2, diferencial=6</small></p>
+                    </div>
+                `;
+            } catch (error) {
+                const resultadoDiv = document.getElementById('resultadoTeste');
+                resultadoDiv.innerHTML = `
+                    <div style="background: #f8d7da; padding: 12px; border-radius: 6px;">
+                        <h4>❌ Erro na Fórmula</h4>
+                        <p><strong>Erro:</strong> ${error.message}</p>
+                        <p>Verifique a sintaxe da fórmula e as variáveis utilizadas.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function salvarCalculoPersonalizado() {
+            const nome = document.getElementById('nomeCalculoPersonalizado').value;
+            const descricao = document.getElementById('descricaoCalculoPersonalizado').value;
+            const formula = document.getElementById('formulaPersonalizada').value;
+            
+            if (!nome || !formula) {
+                alert('Preencha o nome e a fórmula para salvar.');
+                return;
+            }
+            
+            const codigo = 'PERSONALIZADO_' + Date.now();
+            
+            calculosPersonalizados[codigo] = {
+                codigo: codigo,
+                nome: nome,
+                descricao: descricao,
+                formula: formula,
+                cor: 'tipo-personalizado'
+            };
+            
+            // Limpar formulário
+            document.getElementById('nomeCalculoPersonalizado').value = '';
+            document.getElementById('descricaoCalculoPersonalizado').value = '';
+            document.getElementById('formulaPersonalizada').value = '';
+            document.getElementById('resultadoTeste').innerHTML = '';
+            
+            // Atualizar lista de cálculos personalizados
+            renderizarCalculosPersonalizados();
+            salvarCalculosPersonalizados();
+            
+            alert(`Cálculo personalizado "${nome}" salvo com sucesso!`);
+        }
+
+        function renderizarCalculosPersonalizados() {
+            const container = document.getElementById('lista-calculos-personalizados');
+            container.innerHTML = '';
+            
+            if (Object.keys(calculosPersonalizados).length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">Nenhum cálculo personalizado salvo.</p>';
+                return;
+            }
+            
+            Object.values(calculosPersonalizados).forEach(calculo => {
+                const div = document.createElement('div');
+                div.className = 'nf-item';
+                div.innerHTML = `
+                    <div class="nf-header">
+                        <div class="nf-name">${calculo.nome}</div>
+                        <button class="btn btn-danger" onclick="excluirCalculoPersonalizado('${calculo.codigo}')" style="padding: 4px 8px; font-size: 11px;">Excluir</button>
+                    </div>
+                    <div class="nf-origem-destino">${calculo.descricao}</div>
+                    <div style="margin-top: 8px;">
+                        <strong>Fórmula:</strong> <code>${calculo.formula}</code>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function excluirCalculoPersonalizado(codigo) {
+            if (confirm('Tem certeza que deseja excluir este cálculo personalizado?')) {
+                delete calculosPersonalizados[codigo];
+                renderizarCalculosPersonalizados();
+                salvarCalculosPersonalizados();
+            }
+        }
+
+        function salvarCalculosPersonalizados() {
+            localStorage.setItem('calculosPersonalizadosDIFAL', JSON.stringify(calculosPersonalizados));
+        }
+
+        function carregarCalculosPersonalizados() {
+            const calculosSalvos = localStorage.getItem('calculosPersonalizadosDIFAL');
+            if (calculosSalvos) {
+                calculosPersonalizados = JSON.parse(calculosSalvos);
+                renderizarCalculosPersonalizados();
+            }
+        }
+
         // FUNÇÕES EXISTENTES (mantidas da versão original)
         function abrirTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -1133,6 +1440,8 @@
                 atualizarResumoPagamentos();
             } else if (tabName === 'tabAdmin') {
                 renderizarTabelaAdmin();
+            } else if (tabName === 'tabPersonalizado') {
+                renderizarCalculosPersonalizados();
             }
         }
 
@@ -1375,22 +1684,26 @@
 
             container.innerHTML = '';
             calculosComDIFAL.forEach(calculo => {
-                const tipo = TIPOS_CALCULO[calculo.tipoCalculo] || TIPOS_CALCULO.BASICO;
+                const tipo = TIPOS_CALCULO[calculo.tipoCalculo] || calculosPersonalizados[calculo.tipoCalculo] || TIPOS_CALCULO.BASICO;
                 const statusPagamento = calculo.statusPagamento || 'Pendente';
                 const statusClass = statusPagamento === 'Pago' ? 'status-pago' : 
                                  statusPagamento === 'Agendado' ? 'status-agendado' : 
                                  'status-pendente';
 
+                // Usar número da NF em vez do nome do arquivo
+                const displayName = calculo.numeroNF && calculo.numeroNF !== "Número não encontrado" ? 
+                    `NF-e ${calculo.numeroNF}` : calculo.fileName;
+
                 const div = document.createElement('div');
                 div.className = 'nf-item';
                 div.innerHTML = `
                     <div class="nf-header">
-                        <div class="nf-name">${calculo.fileName}</div>
+                        <div class="nf-name">${displayName}</div>
                         <div class="nf-valor">R$ ${calculo.total?.toFixed(2)}</div>
                     </div>
                     <div class="nf-origem-destino">${calculo.origem} → ${calculo.destino}</div>
                     <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                        <div class="tipo-calculo-badge ${tipo.cor}">${tipo.nome}</div>
+                        <div class="tipo-calculo-badge ${tipo.cor || 'tipo-basico'}">${tipo.nome}</div>
                         <div class="${statusClass}">${statusPagamento}</div>
                     </div>
                     <div style="margin-top: 8px; display: flex; gap: 5px;">
@@ -1441,7 +1754,9 @@
             configurarUpload();
             carregarHistorico();
             carregarAliquotasSalvas();
+            carregarCalculosPersonalizados();
             renderizarTabelaAdmin();
+            renderizarCalculosPersonalizados();
         });
 
         function carregarAliquotasSalvas() {
