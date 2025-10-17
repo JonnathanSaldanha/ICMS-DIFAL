@@ -180,7 +180,7 @@
             font-size: 13px;
         }
 
-        /* NOVO LAYOUT HORIZONTAL PARA NFs */
+        /* LAYOUT DOS CARDS DE NF-E */
         .nfs-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -196,7 +196,6 @@
             cursor: pointer;
             transition: all 0.3s;
             border-left: 4px solid #3498db;
-            position: relative;
         }
 
         .nf-card:hover {
@@ -220,12 +219,16 @@
             font-weight: bold;
             color: #2c3e50;
             font-size: 14px;
+            flex: 1;
+            margin-right: 10px;
         }
 
         .nf-valor {
             font-weight: bold;
             color: #27ae60;
             font-size: 14px;
+            text-align: right;
+            min-width: 80px;
         }
 
         .nf-info {
@@ -261,20 +264,6 @@
             font-weight: bold;
             margin-top: 5px;
         }
-
-        .nf-status {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 9px;
-            font-weight: bold;
-        }
-
-        .status-pendente { background: #fff3cd; color: #856404; }
-        .status-agendado { background: #d1ecf1; color: #0c5460; }
-        .status-pago { background: #d4edda; color: #155724; }
 
         /* DETALHES DA NF */
         .detalhes-nf {
@@ -1143,44 +1132,86 @@
             });
         }
 
-        function extrairNumeroNF(xmlContent) {
+        function extrairDadosCompletosNF(xmlContent) {
             try {
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
                 
-                let nfNum = xmlDoc.getElementsByTagName("nNF")[0]?.textContent;
-                if (!nfNum) {
-                    nfNum = xmlDoc.getElementsByTagName("numero")[0]?.textContent;
-                }
-                if (!nfNum) {
-                    const matches = xmlContent.match(/<nNF>(\d+)<\/nNF>/);
-                    if (matches) nfNum = matches[1];
+                // Verificar se é um XML válido
+                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    throw new Error('XML inválido ou malformado');
                 }
                 
-                return nfNum || "Número não encontrado";
+                // Extrair número da NF
+                let numeroNF = xmlDoc.getElementsByTagName("nNF")[0]?.textContent;
+                if (!numeroNF) {
+                    numeroNF = xmlDoc.getElementsByTagName("numero")[0]?.textContent;
+                }
+                
+                // Extrair UF do emitente
+                const ufEmitente = xmlDoc.getElementsByTagName("UF")[0]?.textContent || 
+                                  xmlDoc.querySelector("emit > enderEmit > UF")?.textContent;
+                
+                // Extrair UF do destinatário
+                const ufDestinatario = xmlDoc.getElementsByTagName("UF")[1]?.textContent || 
+                                      xmlDoc.querySelector("dest > enderDest > UF")?.textContent;
+                
+                // Extrair valor total
+                const valorTotalElem = xmlDoc.getElementsByTagName("vNF")[0];
+                const valorTotal = valorTotalElem ? parseFloat(valorTotalElem.textContent) : 0;
+                
+                // Extrair base de cálculo do ICMS
+                const baseCalculoElem = xmlDoc.getElementsByTagName("vBC")[0];
+                const baseCalculoICMS = baseCalculoElem ? parseFloat(baseCalculoElem.textContent) : valorTotal;
+                
+                // Extrair valor do ICMS
+                const valorICMSElem = xmlDoc.getElementsByTagName("vICMS")[0];
+                const valorICMS = valorICMSElem ? parseFloat(valorICMSElem.textContent) : 0;
+                
+                // Extrair CFOP
+                const cfopElem = xmlDoc.getElementsByTagName("CFOP")[0];
+                const cfop = cfopElem ? cfopElem.textContent : "Não encontrado";
+                
+                // Determinar tipo de destinatário
+                const indicadorIEDest = xmlDoc.getElementsByTagName("indIEDest")[0]?.textContent;
+                let tipoDestinatario = 'consumidor';
+                if (indicadorIEDest === '1') {
+                    tipoDestinatario = 'contribuinte';
+                } else if (indicadorIEDest === '2' || indicadorIEDest === '9') {
+                    tipoDestinatario = 'isento';
+                }
+                
+                // Verificar se DIFAL é aplicável
+                const aplicavelDIFAL = ufEmitente !== ufDestinatario && 
+                                      tipoDestinatario === 'consumidor' && 
+                                      valorTotal > 0;
+
+                return {
+                    numeroNF: numeroNF || "Número não encontrado",
+                    ufEmitente: ufEmitente || "UF não encontrada",
+                    ufDestinatario: ufDestinatario || "UF não encontrada",
+                    valorTotal: valorTotal,
+                    baseCalculoICMS: baseCalculoICMS,
+                    valorICMS: valorICMS,
+                    cfop: cfop,
+                    tipoDestinatario: tipoDestinatario,
+                    aplicavelDIFAL: aplicavelDIFAL
+                };
+                
             } catch (error) {
-                console.error("Erro ao extrair número da NF:", error);
-                return "Erro na extração";
+                console.error("Erro ao extrair dados da NF:", error);
+                throw new Error(`Falha na extração dos dados do XML: ${error.message}`);
             }
         }
 
-        function extrairICMSDestacado(xmlContent) {
-            try {
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
-                
-                let icmsValor = xmlDoc.getElementsByTagName("vICMS")[0]?.textContent;
-                if (!icmsValor) {
-                    const ICMSTot = xmlDoc.getElementsByTagName("ICMSTot")[0];
-                    if (ICMSTot) {
-                        icmsValor = ICMSTot.getElementsByTagName("vICMS")[0]?.textContent;
-                    }
-                }
-                
-                return icmsValor ? parseFloat(icmsValor) : 0;
-            } catch (error) {
-                console.error("Erro ao extrair ICMS destacado:", error);
-                return 0;
+        function determinarTipoCalculo(dadosNF) {
+            // Lógica para determinar o tipo de cálculo baseado nas características da NF
+            if (dadosNF.valorICMS > 0) {
+                return 'POR_DENTRO_BASE_LIQUIDA';
+            } else if (dadosNF.ufDestinatario === 'SP' || dadosNF.ufDestinatario === 'RJ') {
+                return 'COM_FCP';
+            } else {
+                return 'BASICO';
             }
         }
 
@@ -1195,42 +1226,47 @@
             xmlFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const numeroNF = extrairNumeroNF(e.target.result);
-                    const icmsDestacado = extrairICMSDestacado(e.target.result);
-                    
-                    const novaNF = {
-                        id: Date.now() + index,
-                        fileName: file.name,
-                        numeroNF: numeroNF,
-                        origem: ['SP', 'RJ', 'PR', 'RS', 'MG'][Math.floor(Math.random() * 5)],
-                        destino: ['MG', 'BA', 'SC', 'AM', 'CE'][Math.floor(Math.random() * 5)],
-                        valorTotal: Math.floor(500 + Math.random() * 3000),
-                        baseCalculo: Math.floor(500 + Math.random() * 3000),
-                        icmsDestacado: icmsDestacado,
-                        tipoDestinatario: 'consumidor',
-                        status: 'Processado',
-                        timestamp: new Date().toLocaleString(),
-                        aplicavel: Math.random() > 0.3,
-                        tipoCalculo: Object.keys(TIPOS_CALCULO)[Math.floor(Math.random() * Object.keys(TIPOS_CALCULO).length)],
-                        statusPagamento: ['Pendente', 'Agendado', 'Pago'][Math.floor(Math.random() * 3)]
-                    };
+                    try {
+                        const dadosNF = extrairDadosCompletosNF(e.target.result);
+                        
+                        const novaNF = {
+                            id: Date.now() + index,
+                            fileName: file.name,
+                            numeroNF: dadosNF.numeroNF,
+                            origem: dadosNF.ufEmitente,
+                            destino: dadosNF.ufDestinatario,
+                            valorTotal: dadosNF.valorTotal,
+                            baseCalculo: dadosNF.baseCalculoICMS,
+                            icmsDestacado: dadosNF.valorICMS,
+                            cfop: dadosNF.cfop,
+                            tipoDestinatario: dadosNF.tipoDestinatario,
+                            status: 'Processado',
+                            timestamp: new Date().toLocaleString(),
+                            aplicavel: dadosNF.aplicavelDIFAL,
+                            tipoCalculo: determinarTipoCalculo(dadosNF),
+                            statusPagamento: 'Pendente'
+                        };
 
-                    const resultado = calcularDIFALMultiTipo(
-                        novaNF.origem,
-                        novaNF.destino,
-                        novaNF.tipoDestinatario,
-                        novaNF.baseCalculo,
-                        TIPOS_CALCULO[novaNF.tipoCalculo],
-                        novaNF.icmsDestacado
-                    );
+                        const resultado = calcularDIFALMultiTipo(
+                            novaNF.origem,
+                            novaNF.destino,
+                            novaNF.tipoDestinatario,
+                            novaNF.baseCalculo,
+                            TIPOS_CALCULO[novaNF.tipoCalculo],
+                            novaNF.icmsDestacado
+                        );
 
-                    Object.assign(novaNF, resultado);
-                    todosCalculos.push(novaNF);
-                    
-                    if (index === xmlFiles.length - 1) {
-                        renderizarListaNFes();
-                        atualizarResumo();
-                        salvarHistorico();
+                        Object.assign(novaNF, resultado);
+                        todosCalculos.push(novaNF);
+                        
+                        if (index === xmlFiles.length - 1) {
+                            renderizarListaNFes();
+                            atualizarResumo();
+                            salvarHistorico();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar XML:', error);
+                        alert(`Erro ao processar ${file.name}: ${error.message}`);
                     }
                 };
                 reader.readAsText(file);
@@ -1409,12 +1445,6 @@
                                 <span class="nf-tipo ${tipo.cor || 'tipo-basico'}">${tipo.nome}</span>
                             </div>
                         </div>
-                        <div class="nf-info-item">
-                            <div class="nf-info-label">Status</div>
-                            <div class="nf-info-value">
-                                <span class="nf-status status-${calculo.statusPagamento?.toLowerCase() || 'pendente'}">${calculo.statusPagamento || 'Pendente'}</span>
-                            </div>
-                        </div>
                     </div>
                 `;
                 
@@ -1471,6 +1501,10 @@
                         <div class="detalhes-item">
                             <div class="detalhes-label">Base de Cálculo</div>
                             <div class="detalhes-value">R$ ${nfSelecionada.baseCalculo?.toFixed(2)}</div>
+                        </div>
+                        <div class="detalhes-item">
+                            <div class="detalhes-label">CFOP</div>
+                            <div class="detalhes-value">${nfSelecionada.cfop || "Não informado"}</div>
                         </div>
                         ${nfSelecionada.icmsDestacado > 0 ? `
                         <div class="detalhes-item">
@@ -2056,6 +2090,7 @@
                     <div class="nf-card-header">
                         <div class="nf-numero">${displayName}</div>
                         <div class="nf-valor">R$ ${calculo.total?.toFixed(2)}</div>
+                        <span class="nf-status status-${statusPagamento.toLowerCase()}">${statusPagamento}</span>
                     </div>
                     <div class="nf-info">
                         <div class="nf-info-item">
@@ -2066,12 +2101,6 @@
                             <div class="nf-info-label">Tipo</div>
                             <div class="nf-info-value">
                                 <span class="nf-tipo ${tipo.cor || 'tipo-basico'}">${tipo.nome}</span>
-                            </div>
-                        </div>
-                        <div class="nf-info-item">
-                            <div class="nf-info-label">Status</div>
-                            <div class="nf-info-value">
-                                <span class="nf-status status-${statusPagamento.toLowerCase()}">${statusPagamento}</span>
                             </div>
                         </div>
                     </div>
