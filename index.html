@@ -454,6 +454,7 @@
         .tipo-st { background: #fd7e14; color: white; }
         .tipo-beneficio { background: #ffc107; color: black; }
         .tipo-personalizado { background: #9c27b0; color: white; }
+        .tipo-auto { background: #2196f3; color: white; }
 
         /* EXPLICAÇÃO DOS CÁLCULOS - MANTIDO DO 12-GUITHB */
         .explicacao-tipos {
@@ -817,6 +818,19 @@
                     <h3>🧩 Tipos de Cálculo Disponíveis</h3>
                     <div class="explicacao-grid">
                         <div class="explicacao-item">
+                            <div class="explicacao-titulo tipo-auto" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Cálculo Automático por Estado</div>
+                            <div class="explicacao-descricao">
+                                <strong>Quando usar:</strong> Aplica automaticamente a regra específica conforme estado destino
+                            </div>
+                            <div class="explicacao-formula">
+                                Variável conforme estado destino
+                            </div>
+                            <div class="passo-calculo">
+                                <strong>Exemplo:</strong> Cada estado tem fórmula específica conforme legislação
+                            </div>
+                        </div>
+
+                        <div class="explicacao-item">
                             <div class="explicacao-titulo tipo-basico" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Cálculo Básico (Por Fora)</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Operações padrão para consumidor final não contribuinte
@@ -865,32 +879,6 @@
                             </div>
                             <div class="passo-calculo">
                                 <strong>Exemplo:</strong> R$ 1.000 × 6% + R$ 1.000 × 2% = R$ 80,00
-                            </div>
-                        </div>
-
-                        <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-importado" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Produtos Importados</div>
-                            <div class="explicacao-descricao">
-                                <strong>Quando usar:</strong> Mercadorias importadas do exterior
-                            </div>
-                            <div class="explicacao-formula">
-                                base × (aliqInterna - 4) ÷ 100
-                            </div>
-                            <div class="passo-calculo">
-                                <strong>Exemplo:</strong> R$ 1.000 × (18% - 4%) = R$ 140,00
-                            </div>
-                        </div>
-
-                        <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-beneficio" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Benefício Fiscal</div>
-                            <div class="explicacao-descricao">
-                                <strong>Quando usar:</strong> Redução da base ou alíquota interna
-                            </div>
-                            <div class="explicacao-formula">
-                                (base × 0.7) × diferencial ÷ 100
-                            </div>
-                            <div class="passo-calculo">
-                                <strong>Exemplo:</strong> (R$ 1.000 × 70%) × 6% = R$ 42,00
                             </div>
                         </div>
                     </div>
@@ -1053,8 +1041,156 @@
     </div>
 
     <script>
-        // TIPOS DE CÁLCULO DIFAL - MANTIDO DO 12-GUITHB
+        // NOVO: Regras específicas por estado destino
+        const REGRAS_ESTADO = {
+            'DF': { 
+                tipo: 'BASE_UNICA', 
+                nome: 'DF - Base Única',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'RR': { 
+                tipo: 'BASE_UNICA', 
+                nome: 'RR - Base Única',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'PI': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'PI - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'MA': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'MA - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'AC': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'AC - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'AP': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'AP - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'PA': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'PA - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'RO': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'RO - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'SP': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'SP - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'TO': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'TO - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'AM': { 
+                tipo: 'BASE_DUPLA_AM', 
+                nome: 'AM - Base Dupla Especial',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'RS': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'RS - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'SC': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'SC - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'MS': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'MS - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'PR': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'PR - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'MT': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'MT - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'ES': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'ES - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'RJ': { 
+                tipo: 'BASE_DUPLA_COM_FECP', 
+                nome: 'RJ - Base Dupla com FECP',
+                formulaDIFAL: '((base - icmsDestacado) / (1 - (aliqInterna + fecp) / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)',
+                formulaFECP: '((base - icmsDestacado) / (1 - (aliqInterna + fecp) / 100)) * fecp / 100'
+            },
+            'MG': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'MG - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'GO': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'GO - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'CE': { 
+                tipo: 'BASE_UNICA_SIMPLES', 
+                nome: 'CE - Base Única Simples',
+                formula: 'base * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'SE': { 
+                tipo: 'BASE_UNICA_SE', 
+                nome: 'SE - Base Única Especial',
+                formula: 'base / (1 - (aliqInterna - aliqInterestadual) / 100) * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'PE': { 
+                tipo: 'BASE_DUPLA_PE', 
+                nome: 'PE - Base Dupla Especial',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'BA': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'BA - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'PB': { 
+                tipo: 'BASE_DUPLA_PB', 
+                nome: 'PB - Base Dupla Especial',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * (aliqInterna - aliqInterestadual) / 100' 
+            },
+            'RN': { 
+                tipo: 'BASE_DUPLA_PADRAO', 
+                nome: 'RN - Base Dupla Padrão',
+                formula: '((base - icmsDestacado) / (1 - aliqInterna / 100)) * aliqInterna / 100 - (base * aliqInterestadual / 100)' 
+            },
+            'AL': { 
+                tipo: 'BASE_SIMPLES_COM_FECP', 
+                nome: 'AL - Base Simples com FECP',
+                formulaDIFAL: 'base / (1 - (aliqInterna + fecp) / 100) * (aliqInterna - aliqInterestadual) / 100',
+                formulaFECP: 'base / (1 - (aliqInterna + fecp) / 100) * fecp / 100'
+            }
+        };
+
+        // TIPOS DE CÁLCULO DIFAL - ATUALIZADO
         const TIPOS_CALCULO = {
+            AUTO: {
+                codigo: 'AUTO',
+                nome: 'Cálculo Automático por Estado',
+                descricao: 'Aplica regra específica conforme estado destino',
+                formula: 'Variável por estado',
+                cor: 'tipo-auto'
+            },
             BASICO: {
                 codigo: 'BASICO',
                 nome: 'Cálculo Básico (Por Fora)',
@@ -1106,8 +1242,7 @@
             }
         };
 
-        // BANCO DE DADOS E FUNÇÕES JAVASCRIPT MANTIDOS DO 12-GUITHB
-        // (Todo o código JavaScript permanece exatamente igual)
+        // BANCO DE DADOS E FUNÇÕES JAVASCRIPT
         let aliquotasInternas = {
             'AC': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
             'AL': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
@@ -1139,9 +1274,9 @@
         };
 
         let fundoPobreza = {
-            'AC': 0, 'AL': 0, 'AP': 0, 'AM': 0, 'BA': 0, 'CE': 0, 'DF': 0, 'ES': 0, 
+            'AC': 0, 'AL': 1, 'AP': 0, 'AM': 0, 'BA': 0, 'CE': 0, 'DF': 0, 'ES': 0, 
             'GO': 0, 'MA': 0, 'MT': 0, 'MS': 0, 'MG': 0, 'PA': 0, 'PB': 0, 'PR': 0, 
-            'PE': 0, 'PI': 0, 'RJ': 0, 'RN': 0, 'RS': 0, 'RO': 0, 'RR': 0, 'SC': 0, 
+            'PE': 0, 'PI': 0, 'RJ': 2, 'RN': 0, 'RS': 0, 'RO': 0, 'RR': 0, 'SC': 0, 
             'SP': 0, 'SE': 0, 'TO': 0
         };
 
@@ -1150,7 +1285,64 @@
         let nfSelecionada = null;
         let calculosPersonalizados = {};
 
-        // FUNÇÕES PRINCIPAIS - MANTIDAS DO 12-GUITHB
+        // NOVA FUNÇÃO: Aplicar regras específicas por estado
+        function aplicarRegraEstado(regraEstado, variaveis) {
+            switch(regraEstado.tipo) {
+                case 'BASE_UNICA':
+                case 'BASE_UNICA_SIMPLES':
+                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
+                    
+                case 'BASE_DUPLA_PADRAO':
+                case 'BASE_DUPLA_AM':
+                case 'BASE_DUPLA_PE':
+                case 'BASE_DUPLA_PB':
+                case 'BASE_UNICA_SE':
+                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
+                    
+                case 'BASE_DUPLA_COM_FECP':
+                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
+                    
+                case 'BASE_SIMPLES_COM_FECP':
+                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
+                    
+                default:
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+            }
+        }
+
+        // NOVA FUNÇÃO: Calcular tipo padrão (mantida para compatibilidade)
+        function calcularTipoPadrao(codigoTipo, variaveis) {
+            switch (codigoTipo) {
+                case 'BASICO':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'POR_DENTRO':
+                    const diferencial = variaveis.aliqInterna - variaveis.aliqInterestadual;
+                    const divisor = (1 - variaveis.aliqInterna / 100);
+                    return (variaveis.base * diferencial / 100) / divisor;
+                    
+                case 'POR_DENTRO_BASE_LIQUIDA':
+                    return calcularPorDentroBaseLiquida(variaveis.base, variaveis.icmsDestacado, variaveis.aliqInterna, variaveis.aliqInterestadual);
+                    
+                case 'COM_FCP':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'IMPORTADO':
+                    return variaveis.base * (variaveis.aliqInterna - 4) / 100;
+                    
+                case 'SUBSTITUICAO_TRIBUTARIA':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'BENEFICIO_FISCAL':
+                    const baseReduzida = variaveis.base * 0.7;
+                    return baseReduzida * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                default:
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+            }
+        }
+
+        // FUNÇÕES PRINCIPAIS
         function configurarUpload() {
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('xmlUpload');
@@ -1244,7 +1436,14 @@
             }
         }
 
+        // ATUALIZADA: função determinarTipoCalculo para usar regras automáticas
         function determinarTipoCalculo(dadosNF) {
+            // Verificar se há regra específica para o estado destino
+            if (REGRAS_ESTADO[dadosNF.ufDestinatario]) {
+                return 'AUTO'; // Novo tipo para cálculo automático baseado no estado
+            }
+            
+            // Lógica anterior mantida como fallback
             if (dadosNF.valorICMS > 0) {
                 return 'POR_DENTRO_BASE_LIQUIDA';
             } else if (dadosNF.ufDestinatario === 'SP' || dadosNF.ufDestinatario === 'RJ') {
@@ -1325,6 +1524,7 @@
             return 12;
         }
 
+        // ATUALIZADA: função calcularDIFALMultiTipo para incluir regras por estado
         function calcularDIFALMultiTipo(origem, destino, tipoDestinatario, baseCalculo, tipoCalculo, icmsDestacado = 0) {
             let resultado = {
                 baseCalculo: baseCalculo,
@@ -1333,71 +1533,51 @@
                 percFCP: fundoPobreza[destino] || 0,
                 tipoCalculo: tipoCalculo,
                 icmsDestacado: icmsDestacado,
-                detalhes: []
+                detalhes: [],
+                regraAplicada: 'PADRÃO' // Nova propriedade para identificar a regra aplicada
             };
 
             const variaveis = {
                 base: baseCalculo,
                 aliqInterna: resultado.aliqInterna,
                 aliqInterestadual: resultado.aliqInterestadual,
-                fcp: resultado.percFCP,
+                fecp: resultado.percFCP,
                 diferencial: resultado.aliqInterna - resultado.aliqInterestadual,
                 icmsDestacado: icmsDestacado
             };
 
             try {
-                if (tipoCalculo.codigo.startsWith('PERSONALIZADO_')) {
+                // NOVO: Verificar se há regra específica para o estado destino
+                const regraEstado = REGRAS_ESTADO[destino];
+                
+                if (regraEstado && tipoCalculo.codigo === 'AUTO') {
+                    // Aplicar regra automática baseada no estado destino
+                    resultado.regraAplicada = regraEstado.tipo;
+                    resultado.difal = aplicarRegraEstado(regraEstado, variaveis);
+                    
+                    // Adicionar detalhes da regra aplicada
+                    resultado.detalhes.push(`Regra aplicada: ${regraEstado.nome}`);
+                } else if (tipoCalculo.codigo.startsWith('PERSONALIZADO_')) {
+                    // Cálculo personalizado (mantido da versão anterior)
                     const calculoPersonalizado = calculosPersonalizados[tipoCalculo.codigo];
                     if (calculoPersonalizado && calculoPersonalizado.formula) {
-                        const formula = calculoPersonalizado.formula;
-                        resultado.difal = executarFormulaPersonalizada(formula, variaveis);
-                    } else {
-                        resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
+                        resultado.difal = executarFormulaPersonalizada(calculoPersonalizado.formula, variaveis);
+                        resultado.regraAplicada = 'PERSONALIZADO';
                     }
                 } else {
-                    switch (tipoCalculo.codigo) {
-                        case 'BASICO':
-                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                            break;
-                            
-                        case 'POR_DENTRO':
-                            const diferencial = resultado.aliqInterna - resultado.aliqInterestadual;
-                            const divisor = (1 - resultado.aliqInterna / 100);
-                            resultado.difal = (baseCalculo * diferencial / 100) / divisor;
-                            break;
-                            
-                        case 'POR_DENTRO_BASE_LIQUIDA':
-                            resultado.difal = calcularPorDentroBaseLiquida(baseCalculo, icmsDestacado, resultado.aliqInterna, resultado.aliqInterestadual);
-                            break;
-                            
-                        case 'COM_FCP':
-                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                            break;
-                            
-                        case 'IMPORTADO':
-                            resultado.aliqInterestadual = 4;
-                            resultado.difal = baseCalculo * (resultado.aliqInterna - 4) / 100;
-                            break;
-                            
-                        case 'SUBSTITUICAO_TRIBUTARIA':
-                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                            resultado.observacao = 'Cálculo ST varia por estado - verificar legislação específica';
-                            break;
-                            
-                        case 'BENEFICIO_FISCAL':
-                            const baseReduzida = baseCalculo * 0.7;
-                            resultado.difal = baseReduzida * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                            resultado.baseCalculoOriginal = baseCalculo;
-                            resultado.baseCalculoReduzida = baseReduzida;
-                            break;
-                            
-                        default:
-                            resultado.difal = baseCalculo * (resultado.aliqInterna - resultado.aliqInterestadual) / 100;
-                    }
+                    // Tipos de cálculo padrão (mantido da versão anterior)
+                    resultado.difal = calcularTipoPadrao(tipoCalculo.codigo, variaveis);
+                    resultado.regraAplicada = tipoCalculo.codigo;
                 }
 
-                resultado.fcp = baseCalculo * resultado.percFCP / 100;
-                resultado.total = resultado.difal + resultado.fcp;
+                // NOVO: Cálculo de FCP específico para estados com FECP
+                if (regraEstado && (regraEstado.tipo === 'BASE_DUPLA_COM_FECP' || regraEstado.tipo === 'BASE_SIMPLES_COM_FECP')) {
+                    resultado.fcp = executarFormulaPersonalizada(regraEstado.formulaFECP, variaveis);
+                } else {
+                    resultado.fcp = baseCalculo * resultado.percFCP / 100;
+                }
+
+                resultado.total = (resultado.difal || 0) + (resultado.fcp || 0);
 
             } catch (error) {
                 resultado.erro = error.message;
@@ -1442,7 +1622,7 @@
             }
         }
 
-        // FUNÇÃO PARA RENDERIZAR CARDS COMPACTOS - MELHORIA DO 13-GUITHB
+        // FUNÇÃO PARA RENDERIZAR CARDS COMPACTOS
         function renderizarListaNFes() {
             const container = document.getElementById('lista-nfes');
             container.innerHTML = '';
@@ -1507,7 +1687,7 @@
             filtrarTabela();
         }
 
-        // FUNÇÃO PARA MOSTRAR DETALHES EXPANDIDOS - MELHORIA DO 13-GUITHB
+        // ATUALIZADA: função mostrarDetalhesExpandidos para incluir regra aplicada
         function mostrarDetalhesExpandidos() {
             const container = document.getElementById('detalhes-container');
             
@@ -1556,6 +1736,12 @@
                             <div class="detalhes-label">Tipo Atual</div>
                             <div class="detalhes-value">
                                 <span class="nf-tipo ${tipoAtual.cor || 'tipo-basico'}">${tipoAtual.nome}</span>
+                            </div>
+                        </div>
+                        <div class="detalhes-item">
+                            <div class="detalhes-label">Regra Aplicada</div>
+                            <div class="detalhes-value">
+                                <span class="nf-tipo tipo-personalizado">${nfSelecionada.regraAplicada || 'Padrão'}</span>
                             </div>
                         </div>
                         <div class="detalhes-item">
@@ -1703,6 +1889,7 @@
                         'ICMS Destacado (R$)': calculo.icmsDestacado?.toFixed(2) || '0.00',
                         'CFOP': calculo.cfop || 'Não informado',
                         'Tipo de Cálculo': tipo.nome,
+                        'Regra Aplicada': calculo.regraAplicada || 'Padrão',
                         'Alíquota Interna (%)': calculo.aliqInterna || 0,
                         'Alíquota Interestadual (%)': calculo.aliqInterestadual || 0,
                         'DIFAL (R$)': calculo.difal?.toFixed(2) || '0.00',
@@ -1749,6 +1936,7 @@
             alert(`Processamento concluído! ${todosCalculos.length} NF-es processadas.`);
         }
 
+        // ATUALIZADA: função fazerBackup para incluir novas regras
         function fazerBackup() {
             if (todosCalculos.length === 0) {
                 alert('Não há dados para backup.');
@@ -1760,6 +1948,7 @@
                 aliquotas: aliquotasInternas,
                 fcp: fundoPobreza,
                 calculosPersonalizados: calculosPersonalizados,
+                regrasEstado: REGRAS_ESTADO, // NOVO: incluir regras
                 timestamp: new Date().toISOString()
             };
             
@@ -2046,7 +2235,7 @@
                 base: 1000,
                 aliqInterna: 18,
                 aliqInterestadual: 12,
-                fcp: 2,
+                fecp: 2,
                 diferencial: 6,
                 icmsDestacado: 120
             };
@@ -2061,7 +2250,7 @@
                         <p><strong>Fórmula:</strong> ${formula}</p>
                         <p><strong>Com base = R$ 1.000,00:</strong></p>
                         <p><strong>Resultado:</strong> R$ ${resultado.toFixed(2)}</p>
-                        <p><small>Variáveis usadas: base=1000, aliqInterna=18, aliqInterestadual=12, fcp=2, diferencial=6, icmsDestacado=120</small></p>
+                        <p><small>Variáveis usadas: base=1000, aliqInterna=18, aliqInterestadual=12, fecp=2, diferencial=6, icmsDestacado=120</small></p>
                     </div>
                 `;
             } catch (error) {
@@ -2159,6 +2348,16 @@
             }
         }
 
+        // NOVA FUNÇÃO: Carregar regras salvas
+        function carregarRegrasEstado() {
+            const regrasSalvas = localStorage.getItem('regrasEstadoDIFAL');
+            if (regrasSalvas) {
+                // Mescla as regras salvas com as padrão
+                const regrasCarregadas = JSON.parse(regrasSalvas);
+                Object.assign(REGRAS_ESTADO, regrasCarregadas);
+            }
+        }
+
         // FUNÇÃO MELHORADA: Cálculo manual
         function calcularManual() {
             const ufOrigem = document.getElementById('ufOrigem').value;
@@ -2171,13 +2370,32 @@
                 return;
             }
 
-            const tipoCalculo = icmsDestacado > 0 ? TIPOS_CALCULO.POR_DENTRO_BASE_LIQUIDA : TIPOS_CALCULO.BASICO;
+            // NOVO: Usar cálculo automático por estado se disponível
+            const regraEstado = REGRAS_ESTADO[ufDestino];
+            const tipoCalculo = regraEstado ? TIPOS_CALCULO.AUTO : 
+                               (icmsDestacado > 0 ? TIPOS_CALCULO.POR_DENTRO_BASE_LIQUIDA : TIPOS_CALCULO.BASICO);
+            
             const resultado = calcularDIFALMultiTipo(ufOrigem, ufDestino, 'consumidor', valorBase, tipoCalculo, icmsDestacado);
             
             const resultadoDiv = document.getElementById('resultadoManual');
             
             let detalhesCalculo = '';
-            if (icmsDestacado > 0 && tipoCalculo.codigo === 'POR_DENTRO_BASE_LIQUIDA') {
+            if (regraEstado) {
+                detalhesCalculo = `
+                    <div class="explicacao-calculo">
+                        <h4>🔍 Detalhamento do Cálculo Automático</h4>
+                        <div class="passo-calculo">
+                            <strong>Estado Destino:</strong> ${ufDestino} - ${regraEstado.nome}
+                        </div>
+                        <div class="passo-calculo">
+                            <strong>Tipo de Regra:</strong> ${regraEstado.tipo}
+                        </div>
+                        <div class="passo-calculo">
+                            <strong>Fórmula Aplicada:</strong> ${regraEstado.formula || regraEstado.formulaDIFAL}
+                        </div>
+                    </div>
+                `;
+            } else if (icmsDestacado > 0 && tipoCalculo.codigo === 'POR_DENTRO_BASE_LIQUIDA') {
                 const baseLiquida = valorBase - icmsDestacado;
                 const baseAjustada = baseLiquida / (1 - resultado.aliqInterna / 100);
                 
@@ -2202,6 +2420,7 @@
                     <h4>✅ Resultado do Cálculo DIFAL</h4>
                     <p><strong>Origem:</strong> ${ufOrigem} → <strong>Destino:</strong> ${ufDestino}</p>
                     <p><strong>Tipo de Cálculo:</strong> ${tipoCalculo.nome}</p>
+                    <p><strong>Regra Aplicada:</strong> ${resultado.regraAplicada}</p>
                     <p><strong>Valor DIFAL:</strong> R$ ${resultado.difal?.toFixed(2) || '0.00'}</p>
                     <p><strong>Valor FCP:</strong> R$ ${resultado.fcp?.toFixed(2) || '0.00'}</p>
                     <p><strong>Total a Recolher:</strong> R$ ${resultado.total?.toFixed(2) || '0.00'}</p>
@@ -2210,14 +2429,16 @@
             `;
         }
 
-        // INICIALIZAÇÃO
+        // INICIALIZAÇÃO ATUALIZADA
         document.addEventListener('DOMContentLoaded', function() {
             configurarUpload();
             carregarHistorico();
             carregarAliquotasSalvas();
             carregarCalculosPersonalizados();
+            carregarRegrasEstado(); // NOVO
             renderizarTabelaAdmin();
             renderizarCalculosPersonalizados();
+            atualizarResumoPagamentos();
         });
 
         function carregarAliquotasSalvas() {
