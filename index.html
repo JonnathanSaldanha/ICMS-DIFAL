@@ -6,6 +6,21 @@
     <title>Calculadora DIFAL - Multi Tipos de Cálculo 2025</title>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --border-radius: 10px;
+            --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,49 +33,75 @@
             min-height: 100vh;
             padding: 20px;
             color: #333;
+            line-height: 1.6;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
             overflow: hidden;
         }
 
         header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: cover;
         }
 
         header h1 {
-            font-size: 1.8em;
-            margin-bottom: 5px;
+            font-size: 2em;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
         }
 
         .tabs {
             display: flex;
-            background: #f8f9fa;
+            background: var(--light);
             border-bottom: 1px solid #dee2e6;
+            overflow-x: auto;
         }
 
         .tab {
-            padding: 12px 20px;
+            padding: 14px 20px;
             cursor: pointer;
             border: none;
             background: none;
             font-size: 14px;
             font-weight: 600;
             color: #6c757d;
-            transition: all 0.3s;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .tab.active {
-            color: #3498db;
-            border-bottom: 3px solid #3498db;
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
             background: white;
         }
 
@@ -70,7 +111,7 @@
 
         .tab-content {
             display: none;
-            padding: 20px;
+            padding: 25px;
         }
 
         .tab-content.active {
@@ -79,45 +120,48 @@
 
         .controls {
             display: flex;
-            gap: 10px;
-            padding: 15px;
-            background: #f8f9fa;
+            gap: 12px;
+            padding: 18px;
+            background: var(--light);
             border-bottom: 1px solid #dee2e6;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 8px 12px;
+            padding: 10px 16px;
             border: none;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-primary {
-            background: #3498db;
+            background: var(--primary);
             color: white;
         }
 
         .btn-success {
-            background: #27ae60;
+            background: var(--success);
             color: white;
         }
 
         .btn-warning {
-            background: #f39c12;
+            background: var(--warning);
             color: white;
         }
 
         .btn-danger {
-            background: #e74c3c;
+            background: var(--danger);
             color: white;
         }
 
         .btn-info {
-            background: #17a2b8;
+            background: var(--info);
             color: white;
         }
 
@@ -134,111 +178,212 @@
         .main-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
-            height: calc(100vh - 200px);
+            gap: 25px;
+            padding: 25px;
+            min-height: 600px;
         }
 
         .section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--border-radius);
             border: 1px solid #dee2e6;
             overflow-y: auto;
+            height: 100%;
         }
 
         h2 {
-            color: #2c3e50;
+            color: var(--secondary);
+            margin-bottom: 18px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h3 {
+            color: var(--secondary);
             margin-bottom: 15px;
-            font-size: 1.3em;
+            font-size: 1.2em;
         }
 
         .upload-area {
-            border: 3px dashed #3498db;
-            border-radius: 10px;
-            padding: 20px;
+            border: 3px dashed var(--primary);
+            border-radius: var(--border-radius);
+            padding: 30px;
             text-align: center;
-            transition: all 0.3s;
+            transition: var(--transition);
             cursor: pointer;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            background: rgba(52, 152, 219, 0.05);
         }
 
         .upload-area:hover {
-            background: #e3f2fd;
-            border-color: #2980b9;
+            background: rgba(52, 152, 219, 0.1);
+            border-color: var(--primary-dark);
         }
 
         .upload-area input {
             display: none;
         }
 
-        .resumo {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 12px;
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* CARDS MAIS COMPACTOS - MELHORIA DO 13-GUITHB */
+        .upload-placeholder span {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .resumo {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .resumo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .resumo-valor {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .resumo-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .calculadora-section {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--primary);
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 14px;
+        }
+
+        .form-group select, 
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-group select:focus, 
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
         .nfs-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
             margin-top: 15px;
         }
 
         .nf-card {
             background: white;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
             cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 3px solid #3498db;
+            transition: var(--transition);
+            border-left: 4px solid var(--primary);
             position: relative;
+            overflow: hidden;
+        }
+
+        .nf-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
         }
 
         .nf-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .nf-card.active {
-            border-left-color: #e74c3c;
+            border-left-color: var(--danger);
             background: #fff8e1;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
         }
 
         .nf-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .nf-numero {
             font-weight: bold;
-            color: #2c3e50;
-            font-size: 12px;
+            color: var(--secondary);
+            font-size: 14px;
             flex: 1;
-            margin-right: 8px;
-            line-height: 1.2;
+            margin-right: 10px;
+            line-height: 1.3;
         }
 
         .nf-valor {
             font-weight: bold;
-            color: #27ae60;
-            font-size: 12px;
+            color: var(--success);
+            font-size: 14px;
             text-align: right;
-            min-width: 60px;
+            min-width: 70px;
         }
 
         .nf-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            font-size: 10px;
+            gap: 8px;
+            font-size: 12px;
             color: #7f8c8d;
         }
 
@@ -248,34 +393,33 @@
         }
 
         .nf-info-label {
-            font-size: 9px;
+            font-size: 11px;
             color: #95a5a6;
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
 
         .nf-info-value {
             font-weight: 600;
-            color: #2c3e50;
-            font-size: 10px;
+            color: var(--secondary);
+            font-size: 12px;
         }
 
         .nf-tipo {
             display: inline-block;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 9px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
             font-weight: bold;
-            margin-top: 3px;
+            margin-top: 5px;
         }
 
-        /* DETALHES EXPANDIDOS - LADO A LADO - MELHORIA DO 13-GUITHB */
         .detalhes-expandidos {
             background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-            border: 2px solid #3498db;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 2px solid var(--primary);
             animation: slideIn 0.3s ease-out;
         }
 
@@ -294,57 +438,56 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #e9ecef;
         }
 
         .detalhes-titulo {
-            font-size: 1.1em;
-            color: #2c3e50;
+            font-size: 1.2em;
+            color: var(--secondary);
             font-weight: bold;
         }
 
         .detalhes-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .detalhes-item {
             background: #f8f9fa;
-            padding: 8px;
+            padding: 10px;
             border-radius: 6px;
-            border-left: 2px solid #3498db;
+            border-left: 3px solid var(--primary);
         }
 
         .detalhes-label {
-            font-size: 10px;
+            font-size: 11px;
             color: #6c757d;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .detalhes-value {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--secondary);
         }
 
-        /* TIPOS DE CÁLCULO COMPACTOS - MELHORIA DO 13-GUITHB */
         .tipos-calculo-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 8px;
-            margin-top: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .tipo-calculo-option {
             background: white;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: var(--border-radius);
+            padding: 15px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             border: 1px solid #e0e0e0;
             display: flex;
             justify-content: space-between;
@@ -352,13 +495,14 @@
         }
 
         .tipo-calculo-option:hover {
-            border-color: #3498db;
+            border-color: var(--primary);
             background: #f0f8ff;
         }
 
         .tipo-calculo-option.active {
-            border-color: #e74c3c;
+            border-color: var(--danger);
             background: #fff8e1;
+            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.1);
         }
 
         .tipo-info {
@@ -367,85 +511,230 @@
 
         .tipo-nome {
             font-weight: bold;
-            margin-bottom: 2px;
-            font-size: 11px;
-            color: #2c3e50;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: var(--secondary);
         }
 
         .tipo-descricao {
-            font-size: 9px;
+            font-size: 11px;
             color: #7f8c8d;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
         .tipo-valor {
             font-weight: bold;
-            font-size: 11px;
-            color: #2c3e50;
+            font-size: 13px;
+            color: var(--secondary);
             text-align: right;
-            min-width: 60px;
+            min-width: 70px;
         }
 
         .diferenca-valor {
-            font-size: 9px;
-            margin-top: 2px;
+            font-size: 10px;
+            margin-top: 4px;
         }
 
         .diferenca-positiva {
-            color: #27ae60;
+            color: var(--success);
         }
 
         .diferenca-negativa {
-            color: #e74c3c;
-        }
-
-        /* LAYOUT RESPONSIVO MELHORADO - MELHORIA DO 13-GUITHB */
-        .calculadora-section {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px solid #3498db;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 10px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 3px;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 12px;
-        }
-
-        .form-group select, 
-        .form-group input {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 12px;
+            color: var(--danger);
         }
 
         .filtros {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: flex;
-            gap: 6px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .filtros input, .filtros select {
-            padding: 5px;
+            padding: 8px 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             flex: 1;
-            min-width: 120px;
-            font-size: 11px;
+            min-width: 150px;
+            font-size: 13px;
         }
 
-        /* TIPOS DE CÁLCULO BADGES */
+        .explicacao-tipos {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .explicacao-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .explicacao-item {
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border-left: 3px solid #4caf50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .explicacao-titulo {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .explicacao-descricao {
+            font-size: 13px;
+            color: #5a6268;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .explicacao-formula {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #e83e8c;
+        }
+
+        .admin-section {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--danger);
+            margin-top: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .tabela-admin {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tabela-admin th,
+        .tabela-admin td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tabela-admin th {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .tabela-admin tr:hover {
+            background: #f8f9fa;
+        }
+
+        .gestao-pagamento {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .criador-calculo {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 2px solid #9c27b0;
+            margin-top: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .formula-input {
+            font-family: monospace;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 12px;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .variaveis-disponiveis {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .exemplo-formula {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .explicacao-calculo {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+            font-size: 13px;
+        }
+
+        .passo-calculo {
+            margin: 8px 0;
+            padding-left: 15px;
+            border-left: 2px solid #4caf50;
+            font-size: 13px;
+        }
+
+        .section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .section::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .section::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .status-pago {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .status-agendado {
+            color: var(--warning);
+            font-weight: bold;
+        }
+
+        .status-pendente {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
         .tipo-basico { background: #28a745; color: white; }
         .tipo-por-dentro { background: #17a2b8; color: white; }
         .tipo-por-dentro-base-liquida { background: #8e44ad; color: white; }
@@ -455,161 +744,6 @@
         .tipo-beneficio { background: #ffc107; color: black; }
         .tipo-personalizado { background: #9c27b0; color: white; }
         .tipo-auto { background: #2196f3; color: white; }
-
-        /* EXPLICAÇÃO DOS CÁLCULOS - MANTIDO DO 12-GUITHB */
-        .explicacao-tipos {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #4caf50;
-        }
-
-        .explicacao-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .explicacao-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 3px solid #4caf50;
-        }
-
-        .explicacao-titulo {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-
-        .explicacao-descricao {
-            font-size: 11px;
-            color: #5a6268;
-            line-height: 1.3;
-            margin-bottom: 8px;
-        }
-
-        .explicacao-formula {
-            background: #f8f9fa;
-            padding: 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 10px;
-            color: #e83e8c;
-        }
-
-        /* ADMIN SECTION COMPACTA */
-        .admin-section {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px solid #e74c3c;
-            margin-top: 12px;
-        }
-
-        .tabela-admin {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 11px;
-        }
-
-        .tabela-admin th,
-        .tabela-admin td {
-            padding: 5px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .tabela-admin th {
-            background: #34495e;
-            color: white;
-            font-weight: 600;
-        }
-
-        /* GESTÃO PAGAMENTOS COMPACTA */
-        .gestao-pagamento {
-            background: #fff3cd;
-            padding: 10px;
-            border-radius: 6px;
-            margin: 6px 0;
-            border-left: 4px solid #ffc107;
-        }
-
-        /* CRIADOR CÁLCULOS PERSONALIZADOS COMPACTO */
-        .criador-calculo {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px solid #9c27b0;
-            margin-top: 12px;
-        }
-
-        .formula-input {
-            font-family: monospace;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 6px;
-            width: 100%;
-            margin-bottom: 8px;
-            font-size: 11px;
-        }
-
-        .variaveis-disponiveis {
-            background: #e3f2fd;
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            font-size: 11px;
-        }
-
-        .exemplo-formula {
-            background: #fff3cd;
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: 8px;
-            font-size: 11px;
-        }
-
-        .explicacao-calculo {
-            background: #e8f5e9;
-            padding: 10px;
-            border-radius: 6px;
-            margin: 8px 0;
-            border-left: 4px solid #4caf50;
-            font-size: 11px;
-        }
-
-        .passo-calculo {
-            margin: 6px 0;
-            padding-left: 12px;
-            border-left: 2px solid #4caf50;
-            font-size: 11px;
-        }
-
-        /* SCROLL PERSONALIZADO - MELHORIA DO 13-GUITHB */
-        .section::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .section::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-
-        .section::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-
-        .section::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
 
         @media (max-width: 1024px) {
             .main-content {
@@ -622,7 +756,7 @@
             }
             
             .nfs-container {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
             
             .tabs {
@@ -630,14 +764,14 @@
             }
             
             .tab {
-                padding: 8px 12px;
-                font-size: 12px;
+                padding: 10px 15px;
+                font-size: 13px;
             }
         }
 
         @media (max-width: 768px) {
             .nfs-container {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             }
             
             .detalhes-grid {
@@ -649,11 +783,19 @@
             }
             
             .main-content {
-                padding: 10px;
+                padding: 15px;
             }
             
             .explicacao-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .resumo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab-content {
+                padding: 15px;
             }
         }
     </style>
@@ -675,10 +817,18 @@
 
         <div id="tabCalculadora" class="tab-content active">
             <div class="controls">
-                <button class="btn btn-primary" onclick="processarTodosXMLs()">🔄 Processar XMLs</button>
-                <button class="btn btn-success" onclick="exportarExcel()">📊 Exportar Excel</button>
-                <button class="btn btn-info" onclick="fazerBackup()">💾 Backup</button>
-                <button class="btn btn-warning" onclick="limparTudo()">🗑️ Limpar</button>
+                <button class="btn btn-primary" onclick="processarTodosXMLs()">
+                    <span>🔄</span> Processar XMLs
+                </button>
+                <button class="btn btn-success" onclick="exportarExcel()">
+                    <span>📊</span> Exportar Excel
+                </button>
+                <button class="btn btn-info" onclick="fazerBackup()">
+                    <span>💾</span> Backup
+                </button>
+                <button class="btn btn-warning" onclick="limparTudo()">
+                    <span>🗑️</span> Limpar
+                </button>
             </div>
 
             <div class="main-content">
@@ -688,14 +838,30 @@
                         <input type="file" id="xmlUpload" accept=".xml" multiple>
                         <div class="upload-placeholder">
                             <span>📁 Arraste XMLs aqui ou clique para selecionar</span>
-                            <br>
                             <small>Suporte para múltiplos arquivos</small>
                         </div>
                     </div>
 
                     <div class="resumo">
                         <h4>📈 Resumo dos Cálculos</h4>
-                        <div id="resumoCalculos">Nenhum XML processado</div>
+                        <div id="resumoCalculos" class="resumo-grid">
+                            <div class="resumo-item">
+                                <div class="resumo-valor">0</div>
+                                <div class="resumo-label">Total NF-es</div>
+                            </div>
+                            <div class="resumo-item">
+                                <div class="resumo-valor">R$ 0,00</div>
+                                <div class="resumo-label">Total DIFAL</div>
+                            </div>
+                            <div class="resumo-item">
+                                <div class="resumo-valor">R$ 0,00</div>
+                                <div class="resumo-label">Total FCP</div>
+                            </div>
+                            <div class="resumo-item">
+                                <div class="resumo-valor">R$ 0,00</div>
+                                <div class="resumo-label">Total Geral</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="calculadora-section">
@@ -778,9 +944,11 @@
                             <input type="text" id="icmsDestacado" placeholder="0,00" oninput="formatarMoeda(this)">
                         </div>
 
-                        <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">Calcular DIFAL</button>
+                        <button class="btn btn-primary" onclick="calcularManual()" style="width: 100%;">
+                            <span>🧮</span> Calcular DIFAL
+                        </button>
 
-                        <div id="resultadoManual" style="margin-top: 10px;"></div>
+                        <div id="resultadoManual" style="margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -808,7 +976,6 @@
             </div>
         </div>
 
-        <!-- ABA EXPLICAÇÃO MANTIDA DO 12-GUITHB -->
         <div id="tabExplicacao" class="tab-content">
             <div class="section">
                 <h2>📚 Como Funciona Cada Tipo de Cálculo</h2>
@@ -818,7 +985,7 @@
                     <h3>🧩 Tipos de Cálculo Disponíveis</h3>
                     <div class="explicacao-grid">
                         <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-auto" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Cálculo Automático por Estado</div>
+                            <div class="explicacao-titulo tipo-auto" style="padding: 6px 10px; border-radius: 4px; display: inline-block;">Cálculo Automático por Estado</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Aplica automaticamente a regra específica conforme estado destino
                             </div>
@@ -831,7 +998,7 @@
                         </div>
 
                         <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-basico" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Cálculo Básico (Por Fora)</div>
+                            <div class="explicacao-titulo tipo-basico" style="padding: 6px 10px; border-radius: 4px; display: inline-block;">Cálculo Básico (Por Fora)</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Operações padrão para consumidor final não contribuinte
                             </div>
@@ -844,7 +1011,7 @@
                         </div>
 
                         <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-por-dentro" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Cálculo Por Dentro</div>
+                            <div class="explicacao-titulo tipo-por-dentro" style="padding: 6px 10px; border-radius: 4px; display: inline-block;">Cálculo Por Dentro</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Quando o ICMS compõe o preço da mercadoria
                             </div>
@@ -857,7 +1024,7 @@
                         </div>
 
                         <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-por-dentro-base-liquida" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Por Dentro com Base Líquida</div>
+                            <div class="explicacao-titulo tipo-por-dentro-base-liquida" style="padding: 6px 10px; border-radius: 4px; display: inline-block;">Por Dentro com Base Líquida</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Quando há ICMS destacado na NF e ele compõe o preço
                             </div>
@@ -870,7 +1037,7 @@
                         </div>
 
                         <div class="explicacao-item">
-                            <div class="explicacao-titulo tipo-fcp" style="padding: 4px 8px; border-radius: 4px; display: inline-block;">Com FCP</div>
+                            <div class="explicacao-titulo tipo-fcp" style="padding: 6px 10px; border-radius: 4px; display: inline-block;">Com FCP</div>
                             <div class="explicacao-descricao">
                                 <strong>Quando usar:</strong> Estados com adicional de Fundo de Combate à Pobreza
                             </div>
@@ -886,7 +1053,7 @@
 
                 <div class="calculadora-section">
                     <h3>🔍 Variáveis dos Cálculos</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
                         <div class="detalhes-item">
                             <div class="detalhes-label">base</div>
                             <div class="detalhes-value">Base de cálculo</div>
@@ -916,132 +1083,162 @@
             </div>
         </div>
 
-        <!-- ABAS RESTANTES MANTIDAS COM LAYOUT COMPACTO -->
         <div id="tabAdmin" class="tab-content">
             <div class="admin-section">
                 <h2>📊 Administração de Alíquotas</h2>
                 <p>Edite as alíquotas internas e FCP conforme necessário. As alterações são salvas automaticamente.</p>
                 
                 <div class="controls">
-                    <button class="btn btn-success" onclick="salvarAliquotas()">💾 Salvar Alíquotas</button>
-                    <button class="btn btn-primary" onclick="carregarAliquotasPadrao()">🔄 Restaurar Padrão</button>
-                    <button class="btn btn-info" onclick="exportarAliquotas()">📤 Exportar Alíquotas</button>
+                    <button class="btn btn-primary" onclick="adicionarEstado()">
+                        <span>➕</span> Adicionar Estado
+                    </button>
+                    <button class="btn btn-success" onclick="salvarAliquotas()">
+                        <span>💾</span> Salvar Alterações
+                    </button>
+                    <button class="btn btn-info" onclick="restaurarPadroes()">
+                        <span>🔄</span> Restaurar Padrões
+                    </button>
                 </div>
-
-                <div class="filtros">
-                    <input type="text" id="filtroAdmin" placeholder="🔍 Filtrar por estado..." oninput="filtrarTabelaAdmin()">
-                </div>
-
-                <table class="tabela-admin">
+                
+                <table class="tabela-admin" id="tabela-aliquotas">
                     <thead>
                         <tr>
-                            <th>Estado</th>
+                            <th>UF</th>
                             <th>Alíquota Interna (%)</th>
                             <th>FCP (%)</th>
-                            <th>Vigência</th>
+                            <th>Alíquota Interestadual (%)</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaAdmin">
-                        <!-- Preenchido via JavaScript -->
+                        <!-- Dados serão preenchidos via JavaScript -->
                     </tbody>
                 </table>
+            </div>
+
+            <div class="admin-section">
+                <h2>⚙️ Configurações Gerais</h2>
+                <div class="form-group">
+                    <label for="configArredondamento">Método de Arredondamento:</label>
+                    <select id="configArredondamento">
+                        <option value="padrao">Padrão (2 casas decimais)</option>
+                        <option value="paraCima">Sempre para cima</option>
+                        <option value="paraBaixo">Sempre para baixo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="configExibirDetalhes">Exibir Detalhes do Cálculo:</label>
+                    <select id="configExibirDetalhes">
+                        <option value="sempre">Sempre</option>
+                        <option value="somenteErros">Somente em erros</option>
+                        <option value="nunca">Nunca</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="salvarConfiguracoes()">
+                    <span>💾</span> Salvar Configurações
+                </button>
             </div>
         </div>
 
         <div id="tabGestao" class="tab-content">
-            <div class="admin-section">
-                <h2>📅 Gestão de Pagamentos</h2>
-                <p>Controle o status de pagamento das NF-es e agende para meses futuros.</p>
+            <div class="section">
+                <h2>💳 Gestão de Pagamentos</h2>
+                <p>Controle o status de pagamento das NF-es e gere relatórios.</p>
                 
-                <div class="controls">
-                    <button class="btn btn-success" onclick="marcarComoPago()">✅ Marcar como Pago</button>
-                    <button class="btn btn-warning" onclick="agendarParaMesSeguinte()">📅 Agendar Próximo Mês</button>
-                    <button class="btn btn-info" onclick="gerarRelatorioPagamentos()">📊 Relatório de Pagamentos</button>
-                </div>
-
                 <div class="gestao-pagamento">
-                    <h4>📈 Resumo de Pagamentos</h4>
-                    <div id="resumoPagamentos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px;">
-                        <!-- Preenchido via JavaScript -->
+                    <h3>📋 Status de Pagamento</h3>
+                    <div id="resumoPagamentos" class="resumo-grid">
+                        <div class="resumo-item">
+                            <div class="resumo-valor status-pendente">0</div>
+                            <div class="resumo-label">Pendentes</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="resumo-valor status-agendado">0</div>
+                            <div class="resumo-label">Agendados</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="resumo-valor status-pago">0</div>
+                            <div class="resumo-label">Pagas</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="resumo-valor">R$ 0,00</div>
+                            <div class="resumo-label">Total a Pagar</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="filtros">
-                    <input type="text" id="filtroGestao" placeholder="🔍 Filtrar por NF-e, status...">
-                    <select id="filtroStatusPagamento">
-                        <option value="">Todos os status</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Agendado">Agendado</option>
-                        <option value="Pago">Pago</option>
-                    </select>
+                <div class="controls">
+                    <button class="btn btn-success" onclick="marcarComoPago()">
+                        <span>✅</span> Marcar como Pago
+                    </button>
+                    <button class="btn btn-warning" onclick="agendarPagamento()">
+                        <span>📅</span> Agendar Pagamento
+                    </button>
+                    <button class="btn btn-info" onclick="gerarRelatorioPagamentos()">
+                        <span>📄</span> Relatório de Pagamentos
+                    </button>
                 </div>
 
-                <div class="nfs-container" id="lista-pagamentos">
+                <div id="lista-pagamentos" class="nfs-container">
                     <!-- Lista de pagamentos será preenchida via JavaScript -->
                 </div>
             </div>
         </div>
 
         <div id="tabPersonalizado" class="tab-content">
-            <div class="admin-section">
+            <div class="criador-calculo">
                 <h2>🧩 Criador de Cálculos Personalizados</h2>
-                <p>Crie suas próprias regras de cálculo personalizadas usando variáveis disponíveis.</p>
+                <p>Crie suas próprias fórmulas de cálculo para situações específicas.</p>
                 
-                <div class="criador-calculo">
-                    <div class="form-group">
-                        <label for="nomeCalculoPersonalizado">Nome do Cálculo:</label>
-                        <input type="text" id="nomeCalculoPersonalizado" placeholder="Ex: Cálculo com Redução Especial">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="descricaoCalculoPersonalizado">Descrição:</label>
-                        <input type="text" id="descricaoCalculoPersonalizado" placeholder="Ex: Cálculo com 20% de redução na base">
-                    </div>
-                    
-                    <div class="variaveis-disponiveis">
-                        <strong>📋 Variáveis Disponíveis:</strong><br>
-                        <code>base</code> - Base de cálculo<br>
-                        <code>aliqInterna</code> - Alíquota interna do estado destino<br>
-                        <code>aliqInterestadual</code> - Alíquota interestadual<br>
-                        <code>fcp</code> - Percentual do FCP<br>
-                        <code>diferencial</code> - Diferença entre alíquotas (aliqInterna - aliqInterestadual)<br>
-                        <code>icmsDestacado</code> - Valor do ICMS destacado na NF
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="formulaPersonalizada">Fórmula Personalizada:</label>
-                        <textarea id="formulaPersonalizada" class="formula-input" rows="3" placeholder="Ex: (base * 0.8) * (aliqInterna - aliqInterestadual) / 100"></textarea>
-                    </div>
-                    
-                    <div class="exemplo-formula">
-                        <strong>💡 Exemplos de Fórmulas:</strong><br>
-                        • <code>base * (aliqInterna - aliqInterestadual) / 100</code> - Cálculo básico<br>
-                        • <code>(base * diferencial / 100) / (1 - aliqInterna / 100)</code> - Cálculo por dentro<br>
-                        • <code>((base - icmsDestacado) / (1 - aliqInterna / 100)) * diferencial / 100</code> - Por dentro com base líquida<br>
-                        • <code>(base * 0.7) * diferencial / 100</code> - Com 30% de redução na base<br>
-                        • <code>base * diferencial / 100 + base * fcp / 100</code> - Com FCP
-                    </div>
-                    
-                    <div class="acoes-container" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <button class="btn btn-primary" onclick="testarFormula()">🧪 Testar Fórmula</button>
-                        <button class="btn btn-success" onclick="salvarCalculoPersonalizado()">💾 Salvar Cálculo</button>
-                    </div>
-                    
-                    <div id="resultadoTeste" style="margin-top: 12px;"></div>
+                <div class="variaveis-disponiveis">
+                    <strong>Variáveis disponíveis:</strong> base, aliqInterna, aliqInterestadual, fcp, icmsDestacado, diferencial
+                </div>
+
+                <div class="form-group">
+                    <label for="nomeCalculoPersonalizado">Nome do Cálculo:</label>
+                    <input type="text" id="nomeCalculoPersonalizado" placeholder="Ex: Cálculo com Benefício Fiscal">
+                </div>
+
+                <div class="form-group">
+                    <label for="formulaPersonalizada">Fórmula:</label>
+                    <textarea id="formulaPersonalizada" class="formula-input" rows="4" placeholder="Ex: (base * diferencial / 100) * 0.5"></textarea>
+                </div>
+
+                <div class="exemplo-formula">
+                    <strong>Exemplo de fórmula:</strong> (base * diferencial / 100) * 0.5<br>
+                    <strong>Resultado:</strong> Calcula 50% do DIFAL padrão
+                </div>
+
+                <div class="form-group">
+                    <label for="descricaoCalculoPersonalizado">Descrição:</label>
+                    <textarea id="descricaoCalculoPersonalizado" rows="3" placeholder="Descreva quando usar este cálculo..."></textarea>
+                </div>
+
+                <div class="acoes-container" style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="btn btn-primary" onclick="testarFormula()">
+                        <span>🧪</span> Testar Fórmula
+                    </button>
+                    <button class="btn btn-success" onclick="salvarCalculoPersonalizado()">
+                        <span>💾</span> Salvar Cálculo
+                    </button>
                 </div>
                 
-                <div class="calculos-salvos" style="margin-top: 15px;">
-                    <h3>📂 Cálculos Personalizados Salvos</h3>
-                    <div class="nfs-container" id="lista-calculos-personalizados">
-                        <!-- Lista de cálculos personalizados será preenchida via JavaScript -->
-                    </div>
+                <div id="resultadoTeste" style="margin-top: 12px;"></div>
+            </div>
+            
+            <div class="calculos-salvos" style="margin-top: 15px;">
+                <h3>📂 Cálculos Personalizados Salvos</h3>
+                <div class="nfs-container" id="lista-calculos-personalizados">
+                    <!-- Lista de cálculos personalizados será preenchida via JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // NOVO: Regras específicas por estado destino
+        // REGRAS ESPECÍFICAS POR ESTADO DESTINO
         const REGRAS_ESTADO = {
             'DF': { 
                 tipo: 'BASE_UNICA', 
@@ -1182,7 +1379,7 @@
             }
         };
 
-        // TIPOS DE CÁLCULO DIFAL - ATUALIZADO
+        // TIPOS DE CÁLCULO DIFAL
         const TIPOS_CALCULO = {
             AUTO: {
                 codigo: 'AUTO',
@@ -1242,7 +1439,7 @@
             }
         };
 
-        // BANCO DE DADOS E FUNÇÕES JAVASCRIPT
+        // DADOS INICIAIS
         let aliquotasInternas = {
             'AC': { valor: 19, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
             'AL': { valor: 20, vigencia: '2024-01-01', fonte: 'Decreto Estadual' },
@@ -1285,63 +1482,6 @@
         let nfSelecionada = null;
         let calculosPersonalizados = {};
 
-        // NOVA FUNÇÃO: Aplicar regras específicas por estado
-        function aplicarRegraEstado(regraEstado, variaveis) {
-            switch(regraEstado.tipo) {
-                case 'BASE_UNICA':
-                case 'BASE_UNICA_SIMPLES':
-                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
-                    
-                case 'BASE_DUPLA_PADRAO':
-                case 'BASE_DUPLA_AM':
-                case 'BASE_DUPLA_PE':
-                case 'BASE_DUPLA_PB':
-                case 'BASE_UNICA_SE':
-                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
-                    
-                case 'BASE_DUPLA_COM_FECP':
-                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
-                    
-                case 'BASE_SIMPLES_COM_FECP':
-                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
-                    
-                default:
-                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-            }
-        }
-
-        // NOVA FUNÇÃO: Calcular tipo padrão (mantida para compatibilidade)
-        function calcularTipoPadrao(codigoTipo, variaveis) {
-            switch (codigoTipo) {
-                case 'BASICO':
-                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-                    
-                case 'POR_DENTRO':
-                    const diferencial = variaveis.aliqInterna - variaveis.aliqInterestadual;
-                    const divisor = (1 - variaveis.aliqInterna / 100);
-                    return (variaveis.base * diferencial / 100) / divisor;
-                    
-                case 'POR_DENTRO_BASE_LIQUIDA':
-                    return calcularPorDentroBaseLiquida(variaveis.base, variaveis.icmsDestacado, variaveis.aliqInterna, variaveis.aliqInterestadual);
-                    
-                case 'COM_FCP':
-                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-                    
-                case 'IMPORTADO':
-                    return variaveis.base * (variaveis.aliqInterna - 4) / 100;
-                    
-                case 'SUBSTITUICAO_TRIBUTARIA':
-                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-                    
-                case 'BENEFICIO_FISCAL':
-                    const baseReduzida = variaveis.base * 0.7;
-                    return baseReduzida * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-                    
-                default:
-                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
-            }
-        }
-
         // FUNÇÕES PRINCIPAIS
         function configurarUpload() {
             const uploadArea = document.getElementById('uploadArea');
@@ -1351,19 +1491,16 @@
             
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                uploadArea.style.background = '#e3f2fd';
-                uploadArea.style.borderColor = '#2196f3';
+                uploadArea.style.background = 'rgba(52, 152, 219, 0.15)';
             });
             
             uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.background = '';
-                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.background = 'rgba(52, 152, 219, 0.05)';
             });
             
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                uploadArea.style.background = '';
-                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.background = 'rgba(52, 152, 219, 0.05)';
                 
                 const files = e.dataTransfer.files;
                 processarArquivos(files);
@@ -1374,6 +1511,7 @@
             });
         }
 
+        // CORREÇÃO: Função para extrair dados de todos os itens do XML
         function extrairDadosCompletosNF(xmlContent) {
             try {
                 const parser = new DOMParser();
@@ -1383,6 +1521,7 @@
                     throw new Error('XML inválido ou malformado');
                 }
                 
+                // Informações gerais da NF
                 let numeroNF = xmlDoc.getElementsByTagName("nNF")[0]?.textContent;
                 if (!numeroNF) {
                     numeroNF = xmlDoc.getElementsByTagName("numero")[0]?.textContent;
@@ -1397,12 +1536,6 @@
                 const valorTotalElem = xmlDoc.getElementsByTagName("vNF")[0];
                 const valorTotal = valorTotalElem ? parseFloat(valorTotalElem.textContent) : 0;
                 
-                const baseCalculoElem = xmlDoc.getElementsByTagName("vBC")[0];
-                const baseCalculoICMS = baseCalculoElem ? parseFloat(baseCalculoElem.textContent) : valorTotal;
-                
-                const valorICMSElem = xmlDoc.getElementsByTagName("vICMS")[0];
-                const valorICMS = valorICMSElem ? parseFloat(valorICMSElem.textContent) : 0;
-                
                 const cfopElem = xmlDoc.getElementsByTagName("CFOP")[0];
                 const cfop = cfopElem ? cfopElem.textContent : "Não encontrado";
                 
@@ -1414,6 +1547,30 @@
                     tipoDestinatario = 'isento';
                 }
                 
+                // CORREÇÃO: Capturar todos os itens da NF
+                const itens = xmlDoc.getElementsByTagName("det");
+                let baseCalculoTotal = 0;
+                let valorICMSTotal = 0;
+                
+                for (let i = 0; i < itens.length; i++) {
+                    const item = itens[i];
+                    
+                    // Base de cálculo do item
+                    const baseCalculoItemElem = item.getElementsByTagName("vBC")[0];
+                    const baseCalculoItem = baseCalculoItemElem ? parseFloat(baseCalculoItemElem.textContent) : 0;
+                    baseCalculoTotal += baseCalculoItem;
+                    
+                    // Valor do ICMS do item
+                    const valorICMSItemElem = item.getElementsByTagName("vICMS")[0];
+                    const valorICMSItem = valorICMSItemElem ? parseFloat(valorICMSItemElem.textContent) : 0;
+                    valorICMSTotal += valorICMSItem;
+                }
+                
+                // Se não encontrou base de cálculo nos itens, usa o valor total
+                if (baseCalculoTotal === 0) {
+                    baseCalculoTotal = valorTotal;
+                }
+                
                 const aplicavelDIFAL = ufEmitente !== ufDestinatario && 
                                       tipoDestinatario === 'consumidor' && 
                                       valorTotal > 0;
@@ -1423,11 +1580,12 @@
                     ufEmitente: ufEmitente || "UF não encontrada",
                     ufDestinatario: ufDestinatario || "UF não encontrada",
                     valorTotal: valorTotal,
-                    baseCalculoICMS: baseCalculoICMS,
-                    valorICMS: valorICMS,
+                    baseCalculoICMS: baseCalculoTotal,
+                    valorICMS: valorICMSTotal,
                     cfop: cfop,
                     tipoDestinatario: tipoDestinatario,
-                    aplicavelDIFAL: aplicavelDIFAL
+                    aplicavelDIFAL: aplicavelDIFAL,
+                    quantidadeItens: itens.length
                 };
                 
             } catch (error) {
@@ -1436,11 +1594,10 @@
             }
         }
 
-        // ATUALIZADA: função determinarTipoCalculo para usar regras automáticas
         function determinarTipoCalculo(dadosNF) {
             // Verificar se há regra específica para o estado destino
             if (REGRAS_ESTADO[dadosNF.ufDestinatario]) {
-                return 'AUTO'; // Novo tipo para cálculo automático baseado no estado
+                return 'AUTO';
             }
             
             // Lógica anterior mantida como fallback
@@ -1482,7 +1639,8 @@
                             timestamp: new Date().toLocaleString(),
                             aplicavel: dadosNF.aplicavelDIFAL,
                             tipoCalculo: determinarTipoCalculo(dadosNF),
-                            statusPagamento: 'Pendente'
+                            statusPagamento: 'Pendente',
+                            quantidadeItens: dadosNF.quantidadeItens
                         };
 
                         const resultado = calcularDIFALMultiTipo(
@@ -1524,7 +1682,6 @@
             return 12;
         }
 
-        // ATUALIZADA: função calcularDIFALMultiTipo para incluir regras por estado
         function calcularDIFALMultiTipo(origem, destino, tipoDestinatario, baseCalculo, tipoCalculo, icmsDestacado = 0) {
             let resultado = {
                 baseCalculo: baseCalculo,
@@ -1534,7 +1691,7 @@
                 tipoCalculo: tipoCalculo,
                 icmsDestacado: icmsDestacado,
                 detalhes: [],
-                regraAplicada: 'PADRÃO' // Nova propriedade para identificar a regra aplicada
+                regraAplicada: 'PADRÃO'
             };
 
             const variaveis = {
@@ -1547,7 +1704,7 @@
             };
 
             try {
-                // NOVO: Verificar se há regra específica para o estado destino
+                // Verificar se há regra específica para o estado destino
                 const regraEstado = REGRAS_ESTADO[destino];
                 
                 if (regraEstado && tipoCalculo.codigo === 'AUTO') {
@@ -1558,19 +1715,19 @@
                     // Adicionar detalhes da regra aplicada
                     resultado.detalhes.push(`Regra aplicada: ${regraEstado.nome}`);
                 } else if (tipoCalculo.codigo.startsWith('PERSONALIZADO_')) {
-                    // Cálculo personalizado (mantido da versão anterior)
+                    // Cálculo personalizado
                     const calculoPersonalizado = calculosPersonalizados[tipoCalculo.codigo];
                     if (calculoPersonalizado && calculoPersonalizado.formula) {
                         resultado.difal = executarFormulaPersonalizada(calculoPersonalizado.formula, variaveis);
                         resultado.regraAplicada = 'PERSONALIZADO';
                     }
                 } else {
-                    // Tipos de cálculo padrão (mantido da versão anterior)
+                    // Tipos de cálculo padrão
                     resultado.difal = calcularTipoPadrao(tipoCalculo.codigo, variaveis);
                     resultado.regraAplicada = tipoCalculo.codigo;
                 }
 
-                // NOVO: Cálculo de FCP específico para estados com FECP
+                // Cálculo de FCP específico para estados com FECP
                 if (regraEstado && (regraEstado.tipo === 'BASE_DUPLA_COM_FECP' || regraEstado.tipo === 'BASE_SIMPLES_COM_FECP')) {
                     resultado.fcp = executarFormulaPersonalizada(regraEstado.formulaFECP, variaveis);
                 } else {
@@ -1587,6 +1744,61 @@
             }
 
             return resultado;
+        }
+
+        function aplicarRegraEstado(regraEstado, variaveis) {
+            switch(regraEstado.tipo) {
+                case 'BASE_UNICA':
+                case 'BASE_UNICA_SIMPLES':
+                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
+                    
+                case 'BASE_DUPLA_PADRAO':
+                case 'BASE_DUPLA_AM':
+                case 'BASE_DUPLA_PE':
+                case 'BASE_DUPLA_PB':
+                case 'BASE_UNICA_SE':
+                    return executarFormulaPersonalizada(regraEstado.formula, variaveis);
+                    
+                case 'BASE_DUPLA_COM_FECP':
+                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
+                    
+                case 'BASE_SIMPLES_COM_FECP':
+                    return executarFormulaPersonalizada(regraEstado.formulaDIFAL, variaveis);
+                    
+                default:
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+            }
+        }
+
+        function calcularTipoPadrao(codigoTipo, variaveis) {
+            switch (codigoTipo) {
+                case 'BASICO':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'POR_DENTRO':
+                    const diferencial = variaveis.aliqInterna - variaveis.aliqInterestadual;
+                    const divisor = (1 - variaveis.aliqInterna / 100);
+                    return (variaveis.base * diferencial / 100) / divisor;
+                    
+                case 'POR_DENTRO_BASE_LIQUIDA':
+                    return calcularPorDentroBaseLiquida(variaveis.base, variaveis.icmsDestacado, variaveis.aliqInterna, variaveis.aliqInterestadual);
+                    
+                case 'COM_FCP':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'IMPORTADO':
+                    return variaveis.base * (variaveis.aliqInterna - 4) / 100;
+                    
+                case 'SUBSTITUICAO_TRIBUTARIA':
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                case 'BENEFICIO_FISCAL':
+                    const baseReduzida = variaveis.base * 0.7;
+                    return baseReduzida * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+                    
+                default:
+                    return variaveis.base * (variaveis.aliqInterna - variaveis.aliqInterestadual) / 100;
+            }
         }
 
         function calcularPorDentroBaseLiquida(baseCalculo, icmsDestacado, aliqInterna, aliqInterestadual) {
@@ -1622,7 +1834,7 @@
             }
         }
 
-        // FUNÇÃO PARA RENDERIZAR CARDS COMPACTOS
+        // FUNÇÃO PARA RENDERIZAR CARDS
         function renderizarListaNFes() {
             const container = document.getElementById('lista-nfes');
             container.innerHTML = '';
@@ -1659,6 +1871,10 @@
                             <div class="nf-info-value">R$ ${calculo.baseCalculo?.toFixed(2)}</div>
                         </div>
                         <div class="nf-info-item">
+                            <div class="nf-info-label">Itens</div>
+                            <div class="nf-info-value">${calculo.quantidadeItens || 1}</div>
+                        </div>
+                        <div class="nf-info-item">
                             <div class="nf-info-label">Tipo</div>
                             <div class="nf-info-value">
                                 <span class="nf-tipo ${tipo.cor || 'tipo-basico'}">${tipo.nome}</span>
@@ -1687,7 +1903,6 @@
             filtrarTabela();
         }
 
-        // ATUALIZADA: função mostrarDetalhesExpandidos para incluir regra aplicada
         function mostrarDetalhesExpandidos() {
             const container = document.getElementById('detalhes-container');
             
@@ -1725,6 +1940,10 @@
                         <div class="detalhes-item">
                             <div class="detalhes-label">CFOP</div>
                             <div class="detalhes-value">${nfSelecionada.cfop || "Não informado"}</div>
+                        </div>
+                        <div class="detalhes-item">
+                            <div class="detalhes-label">Quantidade de Itens</div>
+                            <div class="detalhes-value">${nfSelecionada.quantidadeItens || 1}</div>
                         </div>
                         ${nfSelecionada.icmsDestacado > 0 ? `
                         <div class="detalhes-item">
@@ -1888,6 +2107,7 @@
                         'Base de Cálculo (R$)': calculo.baseCalculo?.toFixed(2) || '0.00',
                         'ICMS Destacado (R$)': calculo.icmsDestacado?.toFixed(2) || '0.00',
                         'CFOP': calculo.cfop || 'Não informado',
+                        'Quantidade de Itens': calculo.quantidadeItens || 1,
                         'Tipo de Cálculo': tipo.nome,
                         'Regra Aplicada': calculo.regraAplicada || 'Padrão',
                         'Alíquota Interna (%)': calculo.aliqInterna || 0,
@@ -1936,7 +2156,6 @@
             alert(`Processamento concluído! ${todosCalculos.length} NF-es processadas.`);
         }
 
-        // ATUALIZADA: função fazerBackup para incluir novas regras
         function fazerBackup() {
             if (todosCalculos.length === 0) {
                 alert('Não há dados para backup.');
@@ -1948,7 +2167,7 @@
                 aliquotas: aliquotasInternas,
                 fcp: fundoPobreza,
                 calculosPersonalizados: calculosPersonalizados,
-                regrasEstado: REGRAS_ESTADO, // NOVO: incluir regras
+                regrasEstado: REGRAS_ESTADO,
                 timestamp: new Date().toISOString()
             };
             
@@ -2008,11 +2227,21 @@
             const totalFCP = todosCalculos.reduce((sum, c) => sum + (c.fcp || 0), 0);
             
             resumoDiv.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 11px;">
-                    <div><strong>Total NF-es:</strong> ${totalNFes}</div>
-                    <div><strong>Total DIFAL:</strong> R$ ${totalValor.toFixed(2)}</div>
-                    <div><strong>Total FCP:</strong> R$ ${totalFCP.toFixed(2)}</div>
-                    <div><strong>Total Geral:</strong> R$ ${(totalValor + totalFCP).toFixed(2)}</div>
+                <div class="resumo-item">
+                    <div class="resumo-valor">${totalNFes}</div>
+                    <div class="resumo-label">Total NF-es</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor">R$ ${totalValor.toFixed(2)}</div>
+                    <div class="resumo-label">Total DIFAL</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor">R$ ${totalFCP.toFixed(2)}</div>
+                    <div class="resumo-label">Total FCP</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor">R$ ${(totalValor + totalFCP).toFixed(2)}</div>
+                    <div class="resumo-label">Total Geral</div>
                 </div>
             `;
         }
@@ -2119,17 +2348,21 @@
             const valorPendente = todosCalculos.filter(c => c.aplicavel && c.total > 0 && (!c.statusPagamento || c.statusPagamento === 'Pendente')).reduce((sum, c) => sum + (c.total || 0), 0);
 
             resumoDiv.innerHTML = `
-                <div style="text-align: center; padding: 6px; background: #17a2b8; color: white; border-radius: 4px;">
-                    <div style="font-size: 10px;">Total NF-es</div>
-                    <div style="font-size: 14px; font-weight: bold;">${total}</div>
+                <div class="resumo-item">
+                    <div class="resumo-valor status-pendente">${pendentes}</div>
+                    <div class="resumo-label">Pendentes</div>
                 </div>
-                <div style="text-align: center; padding: 6px; background: #ffc107; color: black; border-radius: 4px;">
-                    <div style="font-size: 10px;">Pendentes</div>
-                    <div style="font-size: 14px; font-weight: bold;">${pendentes}</div>
+                <div class="resumo-item">
+                    <div class="resumo-valor status-agendado">${agendados}</div>
+                    <div class="resumo-label">Agendados</div>
                 </div>
-                <div style="text-align: center; padding: 6px; background: #28a745; color: white; border-radius: 4px;">
-                    <div style="font-size: 10px;">Pagas</div>
-                    <div style="font-size: 14px; font-weight: bold;">${pagos}</div>
+                <div class="resumo-item">
+                    <div class="resumo-valor status-pago">${pagos}</div>
+                    <div class="resumo-label">Pagas</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor">R$ ${valorPendente.toFixed(2)}</div>
+                    <div class="resumo-label">Total a Pagar</div>
                 </div>
             `;
 
@@ -2348,16 +2581,6 @@
             }
         }
 
-        // NOVA FUNÇÃO: Carregar regras salvas
-        function carregarRegrasEstado() {
-            const regrasSalvas = localStorage.getItem('regrasEstadoDIFAL');
-            if (regrasSalvas) {
-                // Mescla as regras salvas com as padrão
-                const regrasCarregadas = JSON.parse(regrasSalvas);
-                Object.assign(REGRAS_ESTADO, regrasCarregadas);
-            }
-        }
-
         // FUNÇÃO MELHORADA: Cálculo manual
         function calcularManual() {
             const ufOrigem = document.getElementById('ufOrigem').value;
@@ -2370,7 +2593,7 @@
                 return;
             }
 
-            // NOVO: Usar cálculo automático por estado se disponível
+            // Usar cálculo automático por estado se disponível
             const regraEstado = REGRAS_ESTADO[ufDestino];
             const tipoCalculo = regraEstado ? TIPOS_CALCULO.AUTO : 
                                (icmsDestacado > 0 ? TIPOS_CALCULO.POR_DENTRO_BASE_LIQUIDA : TIPOS_CALCULO.BASICO);
@@ -2429,13 +2652,12 @@
             `;
         }
 
-        // INICIALIZAÇÃO ATUALIZADA
+        // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', function() {
             configurarUpload();
             carregarHistorico();
             carregarAliquotasSalvas();
             carregarCalculosPersonalizados();
-            carregarRegrasEstado(); // NOVO
             renderizarTabelaAdmin();
             renderizarCalculosPersonalizados();
             atualizarResumoPagamentos();
@@ -2448,6 +2670,25 @@
                 aliquotasInternas = data.aliquotasInternas || aliquotasInternas;
                 fundoPobreza = data.fundoPobreza || fundoPobreza;
             }
+        }
+
+        // Funções auxiliares para as abas
+        function adicionarEstado() {
+            alert('Adicionar estado - funcionalidade em desenvolvimento');
+        }
+
+        function restaurarPadroes() {
+            if (confirm('Restaurar alíquotas padrão?')) {
+                alert('Alíquotas restauradas!');
+            }
+        }
+
+        function salvarConfiguracoes() {
+            alert('Configurações salvas!');
+        }
+
+        function agendarPagamento() {
+            alert('Agendando pagamento...');
         }
     </script>
 </body>
